@@ -11,6 +11,8 @@ const ACTION_LABELS = {
   'stock.in': ['Stock in', 'in'],
   'stock.out': ['Stock out', 'out'],
   'stock.adjustment': ['Stock adjusted', 'adjustment'],
+  'sale.create': ['Sale', 'in'],
+  'sale.void': ['Sale voided', 'low'],
   'category.create': ['Category added', 'ok'],
   'category.update': ['Category edited', 'adjustment'],
   'category.delete': ['Category deleted', 'low'],
