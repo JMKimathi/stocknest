@@ -11,9 +11,11 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const productRoutes = require('./routes/productRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const activityRoutes = require('./routes/activityRoutes');
 
 const app = express();
 
+app.set('trust proxy', 'loopback'); // so req.ip is the real address behind a local proxy
 app.use(cors());
 app.use(express.json({ limit: '1mb' })); // room for a profile photo
 
@@ -27,6 +29,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/activity', activityRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'StockNest API is running' }));
 

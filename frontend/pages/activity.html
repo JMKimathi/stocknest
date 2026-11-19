@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockNest — Activity Log</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">StockNest</div>
+      <nav>
+        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
+        <a href="products.html" data-page="products">Products</a>
+        <a href="categories.html" data-page="categories">Categories</a>
+        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
+        <a href="users.html" data-page="users" class="admin-only">Users</a>
+        <a href="activity.html" data-page="activity" class="admin-only">Activity log</a>
+        <a href="profile.html" data-page="profile">My profile</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Activity log</h1>
+        <div class="topbar-actions">
+          <div class="user-chip" id="userChip"></div>
+          <button class="secondary small" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div id="pageAlert" class="alert" style="display:none;"></div>
+
+      <div class="card">
+        <div class="table-toolbar">
+          <div class="filters">
+            <input type="text" id="searchInput" placeholder="Search details, action or person...">
+            <select id="userFilter"><option value="">Everyone</option></select>
+            <select id="typeFilter">
+              <option value="">Everything</option>
+              <option value="product">Products &amp; stock</option>
+              <option value="category">Categories</option>
+              <option value="supplier">Suppliers</option>
+              <option value="user">Users &amp; profiles</option>
+              <option value="auth">Sign-ins</option>
+            </select>
+            <input type="date" id="fromDate" title="From">
+            <input type="date" id="toDate" title="To">
+          </div>
+          <button class="secondary" id="clearFilters">Clear</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Details</th><th>IP</th></tr></thead>
+            <tbody id="activityBody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="pager">
+          <span id="pagerInfo" class="muted"></span>
+          <div>
+            <button class="secondary small" id="prevPage">Previous</button>
+            <button class="secondary small" id="nextPage">Next</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/activity.js"></script>
+</body>
+</html>

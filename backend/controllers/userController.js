@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
+const logActivity = require('../utils/activity');
 
 // GET /api/users
 async function getUsers(req, res) {
@@ -33,6 +34,7 @@ async function createUser(req, res) {
       [name, email, password_hash, validRole]
     );
 
+    await logActivity(req, { action: 'user.create', entityType: 'user', entityId: result.insertId, details: `Created ${validRole} account for ${name} (${email})` });
     res.status(201).json({ id: result.insertId, name, email, role: validRole });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -81,6 +83,16 @@ async function updateUser(req, res) {
       ]
     );
 
+    const changes = [];
+    if (role !== undefined && role !== existing[0].role) changes.push(`role ${existing[0].role} -> ${role}`);
+    if (is_active !== undefined && Number(is_active) !== Number(existing[0].is_active)) {
+      changes.push(Number(is_active) ? 'account enabled' : 'account disabled');
+    }
+    if (name !== undefined && name !== existing[0].name) changes.push(`renamed to ${name}`);
+    await logActivity(req, {
+      action: 'user.update', entityType: 'user', entityId: Number(id),
+      details: `Updated ${existing[0].name}${changes.length ? ': ' + changes.join(', ') : ''}`
+    });
     res.json({ message: 'User updated successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -96,7 +108,7 @@ async function deleteUser(req, res) {
       return res.status(400).json({ message: 'You cannot delete your own account' });
     }
 
-    const [[target]] = await pool.query('SELECT id, role, is_active FROM users WHERE id = ?', [id]);
+    const [[target]] = await pool.query('SELECT id, name, email, role, is_active FROM users WHERE id = ?', [id]);
     if (!target) return res.status(404).json({ message: 'User not found' });
 
     // Deleting a user would also delete every stock movement they recorded,
@@ -118,6 +130,7 @@ async function deleteUser(req, res) {
     }
 
     await pool.query('DELETE FROM users WHERE id = ?', [id]);
+    await logActivity(req, { action: 'user.delete', entityType: 'user', entityId: Number(id), details: `Deleted account of ${target.name} (${target.email})` });
     res.json({ message: 'User deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
