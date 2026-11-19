@@ -13,6 +13,7 @@ const productRoutes = require('./routes/productRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const salesRoutes = require('./routes/salesRoutes');
+const purchaseOrderRoutes = require('./routes/purchaseOrderRoutes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/sales', salesRoutes);
+app.use('/api/purchase-orders', purchaseOrderRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'StockNest API is running' }));
 

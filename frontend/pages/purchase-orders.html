@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockNest — Purchase Orders</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">StockNest</div>
+      <nav>
+        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
+        <a href="products.html" data-page="products">Products</a>
+        <a href="sales.html" data-page="sales">Sales</a>
+        <a href="purchase-orders.html" data-page="purchase-orders">Purchase orders</a>
+        <a href="categories.html" data-page="categories">Categories</a>
+        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
+        <a href="users.html" data-page="users" class="admin-only">Users</a>
+        <a href="activity.html" data-page="activity" class="admin-only">Activity log</a>
+        <a href="profile.html" data-page="profile">My profile</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Purchase orders</h1>
+        <div class="topbar-actions">
+          <div class="user-chip" id="userChip"></div>
+          <button class="secondary small" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div id="pageAlert" class="alert" style="display:none;"></div>
+
+      <div class="status-pills" id="statusPills">
+        <button class="pill active" data-status="">All</button>
+        <button class="pill" data-status="draft">Drafts <span></span></button>
+        <button class="pill" data-status="ordered">Ordered <span></span></button>
+        <button class="pill" data-status="partially_received">Part received <span></span></button>
+        <button class="pill" data-status="received">Received <span></span></button>
+        <button class="pill" data-status="cancelled">Cancelled <span></span></button>
+      </div>
+
+      <div class="card">
+        <div class="table-toolbar">
+          <div class="filters">
+            <input type="text" id="searchInput" placeholder="PO number, supplier or notes...">
+            <select id="supplierFilter"><option value="">All suppliers</option></select>
+          </div>
+          <button id="newPoBtn">New purchase order</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>PO number</th><th>Supplier</th><th>Created</th><th>Expected</th><th>Received</th><th>Total cost</th><th>Status</th><th></th></tr></thead>
+            <tbody id="poBody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span id="pagerInfo" class="muted"></span>
+          <div>
+            <button class="secondary small" id="prevPage">Previous</button>
+            <button class="secondary small" id="nextPage">Next</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create / edit -->
+  <div class="modal-overlay" id="poModal">
+    <div class="modal wide">
+      <h3 id="poModalTitle">New purchase order</h3>
+      <div id="poFormError" class="alert error" style="display:none;"></div>
+      <form id="poForm">
+        <input type="hidden" id="poId">
+        <div class="form-row">
+          <div>
+            <label>Supplier</label>
+            <select id="poSupplier" required></select>
+          </div>
+          <div>
+            <label>Expected delivery</label>
+            <input type="date" id="poExpected">
+          </div>
+        </div>
+        <label>Products</label>
+        <div class="table-wrap">
+          <table class="lines-table">
+            <thead><tr><th>Product</th><th style="width:90px">Qty</th><th style="width:120px">Unit cost</th><th style="width:120px">Line total</th><th style="width:40px"></th></tr></thead>
+            <tbody id="poLines"></tbody>
+          </table>
+        </div>
+        <div class="lines-footer">
+          <button type="button" class="secondary small" id="addLineBtn">+ Add product</button>
+          <span>Total: <strong id="poTotal">KSh 0.00</strong></span>
+        </div>
+        <label>Notes</label>
+        <textarea id="poNotes" rows="2" placeholder="Delivery instructions, payment terms..."></textarea>
+        <div class="modal-actions">
+          <button type="button" class="secondary" onclick="closeModal('poModal')">Cancel</button>
+          <button type="submit" class="secondary" data-place="0">Save as draft</button>
+          <button type="submit" data-place="1" id="placeBtn">Save &amp; place order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View / receive -->
+  <div class="modal-overlay" id="viewModal">
+    <div class="modal wide">
+      <h3><span id="viewTitle"></span> <span id="viewStatus"></span></h3>
+      <div class="po-meta" id="viewMeta"></div>
+      <div id="viewError" class="alert error" style="display:none;"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>Ordered</th><th>Received</th><th>Unit cost</th><th>Line total</th><th id="receiveHead" style="width:110px">Receiving now</th></tr></thead>
+          <tbody id="viewLines"></tbody>
+        </table>
+      </div>
+      <div class="lines-footer"><span></span><span>Total: <strong id="viewTotal"></strong></span></div>
+      <div class="modal-actions" id="viewActions"></div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/purchase-orders.js"></script>
+</body>
+</html>
