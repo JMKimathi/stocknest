@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getProducts, getProductById, createProduct, updateProduct, deleteProduct, restoreProduct,
-  adjustStock, getProductHistory, getDashboardSummary
+  getProducts, getProductById, getProductImage, createProduct, updateProduct, deleteProduct, restoreProduct,
+  adjustStock, getProductHistory, getDashboardSummary, importProducts
 } = require('../controllers/productController');
 const protect = require('../middleware/authMiddleware');
 const { adminOnly } = require('../middleware/roleMiddleware');
 
-router.use(protect); // all product routes require login
+// Product pictures are public so they can be used directly in <img> tags
+router.get('/:id/image', getProductImage);
+
+router.use(protect); // everything below requires login
 
 router.get('/summary/dashboard', getDashboardSummary);
 router.get('/', getProducts);
@@ -19,7 +22,8 @@ router.post('/', createProduct);
 router.post('/:id/stock', adjustStock);
 router.put('/:id', updateProduct);
 
-// Only admin can archive/delete or restore a product
+// Admin only: bulk import, archive/delete and restore
+router.post('/import', adminOnly, importProducts);
 router.delete('/:id', adminOnly, deleteProduct);
 router.patch('/:id/restore', adminOnly, restoreProduct);
 

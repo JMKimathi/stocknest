@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const logActivity = require('../utils/activity');
+const { notify } = require('../utils/notify');
 
 const money = (n) => Math.round(Number(n) * 100) / 100;
 
@@ -302,6 +303,15 @@ async function receiveItems(req, res) {
       action: 'po.receive', entityType: 'purchase_order', entityId: po.id,
       details: `Received on ${po.po_number}: ${received.join(', ')}${complete ? ' (order complete)' : ''}`
     });
+    // Let whoever created the order know it has arrived (if someone else received it)
+    if (complete && po.created_by && po.created_by !== req.user.id) {
+      await notify({ userIds: [po.created_by] }, {
+        type: 'po_received',
+        title: `Delivered: ${po.po_number}`,
+        message: `${req.user.name} received the full order from ${po.supplier_name}.`,
+        link: 'purchase-orders.html', entityType: 'purchase_order', entityId: po.id
+      });
+    }
     res.json({ message: complete ? `${po.po_number} fully received` : `Delivery recorded on ${po.po_number}`, complete });
   } catch (err) {
     await connection.rollback();

@@ -38,7 +38,7 @@
       <div class="card">
         <div class="table-toolbar">
           <div class="filters">
-            <input type="text" id="searchInput" placeholder="Search by name or SKU...">
+            <input type="text" id="searchInput" placeholder="Search name, SKU or scan a barcode...">
             <select id="categoryFilter"><option value="">All categories</option></select>
             <select id="lowStockFilter">
               <option value="">All stock levels</option>
@@ -49,19 +49,22 @@
               <option value="true">Archived products</option>
             </select>
           </div>
-          <button id="addProductBtn">Add product</button>
+          <div class="toolbar-buttons">
+            <button id="importBtn" class="secondary admin-only">Import CSV</button>
+            <button id="addProductBtn">Add product</button>
+          </div>
         </div>
 
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>SKU</th><th>Name</th><th>Category</th><th>Supplier</th>
-                <th>Qty</th><th>Unit Price</th><th>Status</th><th>Actions</th>
+                <th style="width:48px"></th><th>SKU</th><th>Name</th><th>Category</th><th>Supplier</th>
+                <th>Qty</th><th>Price</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="productsBody">
-              <tr><td colspan="8" class="empty-state">Loading...</td></tr>
+              <tr><td colspan="9" class="empty-state">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -69,18 +72,37 @@
     </main>
   </div>
 
+  <!-- Add / edit product -->
   <div class="modal-overlay" id="productModal">
-    <div class="modal">
-      <h3 id="productModalTitle">Add Product</h3>
+    <div class="modal wide">
+      <h3 id="productModalTitle">Add product</h3>
       <div id="productFormError" class="alert error" style="display:none;"></div>
       <form id="productForm">
         <input type="hidden" id="productId">
-        <label>Name</label>
-        <input type="text" id="productName" required>
-        <label>SKU</label>
-        <input type="text" id="productSku" required>
-        <label>Description</label>
-        <textarea id="productDescription" rows="2"></textarea>
+        <div class="product-form">
+          <div class="image-picker">
+            <div id="imagePreview" class="image-preview"><span>No picture</span></div>
+            <label class="button-like secondary small" for="productImageInput">Choose picture</label>
+            <input type="file" id="productImageInput" accept="image/png,image/jpeg,image/webp" hidden>
+            <button type="button" class="secondary small" id="removeImageBtn">Remove</button>
+          </div>
+          <div>
+            <label>Name</label>
+            <input type="text" id="productName" required>
+            <div class="form-row">
+              <div>
+                <label>SKU</label>
+                <input type="text" id="productSku" required>
+              </div>
+              <div>
+                <label>Barcode <span class="muted small-text">(optional, scan it in)</span></label>
+                <input type="text" id="productBarcode" placeholder="e.g. 6161101234567">
+              </div>
+            </div>
+            <label>Description</label>
+            <textarea id="productDescription" rows="2"></textarea>
+          </div>
+        </div>
         <div class="form-row">
           <div>
             <label>Category</label>
@@ -93,41 +115,49 @@
         </div>
         <div class="form-row">
           <div>
-            <label>Initial Quantity</label>
-            <input type="number" id="productQuantity" min="0" value="0">
+            <label>Opening quantity</label>
+            <input type="number" id="productQuantity" min="0" step="1" value="0">
           </div>
           <div>
-            <label>Reorder Level</label>
-            <input type="number" id="productReorderLevel" min="0" value="5">
+            <label>Reorder level</label>
+            <input type="number" id="productReorderLevel" min="0" step="1" value="5">
+          </div>
+          <div>
+            <label>Cost price (KSh)</label>
+            <input type="number" id="productCostPrice" min="0" step="0.01" value="0">
+          </div>
+          <div>
+            <label>Selling price (KSh)</label>
+            <input type="number" id="productUnitPrice" min="0" step="0.01" value="0">
           </div>
         </div>
-        <label>Unit Price</label>
-        <input type="number" id="productUnitPrice" min="0" step="0.01" value="0">
+        <div class="muted small-text" id="marginHint"></div>
 
         <div class="modal-actions">
           <button type="button" class="secondary" onclick="closeModal('productModal')">Cancel</button>
-          <button type="submit">Save Product</button>
+          <button type="submit">Save product</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- Stock adjustment -->
   <div class="modal-overlay" id="stockModal">
     <div class="modal">
-      <h3>Adjust Stock — <span id="stockProductName"></span></h3>
+      <h3>Adjust stock — <span id="stockProductName"></span></h3>
       <div id="stockFormError" class="alert error" style="display:none;"></div>
       <form id="stockForm">
         <input type="hidden" id="stockProductId">
         <label>Type</label>
         <select id="stockType">
-          <option value="in">Stock In (add)</option>
-          <option value="out">Stock Out (remove)</option>
-          <option value="adjustment">Adjustment (set exact value)</option>
+          <option value="in">Stock in (add)</option>
+          <option value="out">Stock out (remove)</option>
+          <option value="adjustment">Adjustment (set exact count)</option>
         </select>
         <label>Quantity</label>
-        <input type="number" id="stockQuantity" min="1" required>
+        <input type="number" id="stockQuantity" min="0" step="1" required>
         <label>Reason (optional)</label>
-        <input type="text" id="stockReason" placeholder="e.g. New delivery, damaged goods...">
+        <input type="text" id="stockReason" placeholder="e.g. Stock count, damaged goods...">
         <div class="modal-actions">
           <button type="button" class="secondary" onclick="closeModal('stockModal')">Cancel</button>
           <button type="submit">Confirm</button>
@@ -136,9 +166,10 @@
     </div>
   </div>
 
+  <!-- History -->
   <div class="modal-overlay" id="historyModal">
-    <div class="modal" style="width:540px;">
-      <h3>Stock History — <span id="historyProductName"></span></h3>
+    <div class="modal" style="width:560px;">
+      <h3>Stock history — <span id="historyProductName"></span></h3>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Type</th><th>Qty</th><th>Reason</th><th>By</th><th>When</th></tr></thead>
@@ -147,6 +178,30 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="secondary" onclick="closeModal('historyModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSV import -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal wide">
+      <h3>Import products from CSV</h3>
+      <p class="muted">
+        Columns: <code>sku, name, barcode, description, category, supplier, quantity, reorder_level, unit_price, cost_price</code>.
+        Only <strong>sku</strong> and <strong>name</strong> are required. Missing categories and suppliers are created.
+        <a href="#" id="templateLink">Download a template</a>.
+      </p>
+      <div id="importError" class="alert error" style="display:none;"></div>
+      <input type="file" id="importFile" accept=".csv,text/csv">
+      <label class="checkbox-line">
+        <input type="checkbox" id="importUpdate">
+        Update products whose SKU already exists (their stock quantity is not changed)
+      </label>
+      <div id="importPreview"></div>
+      <div id="importResult"></div>
+      <div class="modal-actions">
+        <button type="button" class="secondary" onclick="closeModal('importModal')">Close</button>
+        <button type="button" id="runImportBtn" disabled>Import</button>
       </div>
     </div>
   </div>

@@ -47,7 +47,7 @@ const resultsBox = document.getElementById('searchResults');
 function findMatches(term) {
   const t = term.toLowerCase();
   return products
-    .filter(p => p.name.toLowerCase().includes(t) || p.sku.toLowerCase().includes(t))
+    .filter(p => p.name.toLowerCase().includes(t) || p.sku.toLowerCase().includes(t) || (p.barcode || '').toLowerCase().includes(t))
     .slice(0, 8);
 }
 
@@ -72,7 +72,7 @@ searchInput.addEventListener('keydown', (e) => {
   const term = searchInput.value.trim().toLowerCase();
   if (!term) return;
   // An exact SKU match wins (barcode scanners type the SKU then press Enter)
-  const exact = products.find(p => p.sku.toLowerCase() === term);
+  const exact = products.find(p => p.sku.toLowerCase() === term || (p.barcode || '').toLowerCase() === term);
   const pick = exact || findMatches(term).find(p => p.quantity > 0);
   if (pick) addToCart(pick.id);
 });
@@ -205,6 +205,7 @@ document.getElementById('completeSaleBtn').addEventListener('click', async () =>
     });
     resetCheckout();
     await loadProducts(); // refresh stock levels
+    refreshNotificationCount();
     showAlert(`Sale ${sale.receipt_no} saved.${sale.change_due > 0 ? ' Change: ' + money(sale.change_due) : ''}`, 'success');
     window.open(`receipt.html?id=${sale.id}`, '_blank');
   } catch (err) {

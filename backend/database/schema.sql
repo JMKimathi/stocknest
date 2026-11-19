@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS products (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(150) NOT NULL,
   sku VARCHAR(60) NOT NULL UNIQUE,
+  barcode VARCHAR(64) NULL UNIQUE,
   description VARCHAR(255),
+  image MEDIUMTEXT NULL,
   category_id INT,
   supplier_id INT,
   quantity INT NOT NULL DEFAULT 0,
@@ -143,6 +145,23 @@ CREATE TABLE IF NOT EXISTS sale_items (
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
   INDEX idx_sale_items_sale (sale_id),
   INDEX idx_sale_items_product (product_id)
+);
+
+-- Alerts shown under the bell icon (one row per person)
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  type VARCHAR(30) NOT NULL,        -- low_stock, out_of_stock, po_overdue, po_received, sale_voided
+  title VARCHAR(150) NOT NULL,
+  message VARCHAR(500),
+  link VARCHAR(200),
+  entity_type VARCHAR(30),
+  entity_id INT,
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_notifications_user (user_id, is_read, created_at),
+  INDEX idx_notifications_entity (type, entity_type, entity_id)
 );
 
 -- Who did what, across the whole system

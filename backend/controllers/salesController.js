@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const logActivity = require('../utils/activity');
+const { notify, stockAlert } = require('../utils/notify');
 
 const PAYMENT_METHODS = ['cash', 'mpesa', 'card', 'bank'];
 const money = (n) => Math.round(Number(n) * 100) / 100;
@@ -112,6 +113,8 @@ async function createSale(req, res) {
       details: `Sale ${receiptNo}: ${lines.length} item(s), total KSh ${total.toFixed(2)} via ${payment_method}`
     });
 
+    for (const l of lines) await stockAlert(l.p, l.p.quantity, l.p.quantity - l.qty);
+
     res.status(201).json({ id: saleId, receipt_no: receiptNo, total, change_due: change });
   } catch (err) {
     await connection.rollback();
@@ -211,6 +214,12 @@ async function voidSale(req, res) {
     await logActivity(req, {
       action: 'sale.void', entityType: 'sale', entityId: sale.id,
       details: `Voided ${sale.receipt_no} (KSh ${Number(sale.total).toFixed(2)}): ${reason}`
+    });
+    await notify({ roles: ['admin'] }, {
+      type: 'sale_voided',
+      title: `Sale voided: ${sale.receipt_no}`,
+      message: `${req.user.name} voided KSh ${Number(sale.total).toFixed(2)}. Reason: ${reason}`,
+      link: 'sales.html', entityType: 'sale', entityId: sale.id
     });
     res.json({ message: `Sale ${sale.receipt_no} voided and stock returned` });
   } catch (err) {

@@ -8,6 +8,7 @@ const ACTION_LABELS = {
   'product.archive': ['Product archived', 'low'],
   'product.restore': ['Product restored', 'ok'],
   'product.delete': ['Product deleted', 'low'],
+  'product.import': ['CSV import', 'ok'],
   'stock.in': ['Stock in', 'in'],
   'stock.out': ['Stock out', 'out'],
   'stock.adjustment': ['Stock adjusted', 'adjustment'],

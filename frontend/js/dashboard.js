@@ -18,6 +18,13 @@ async function loadDashboard() {
     document.getElementById('statTotalItems').textContent = summary.totalItems;
     document.getElementById('statTotalValue').textContent = formatCurrency(summary.totalValue);
     document.getElementById('statLowStock').textContent = summary.lowStockCount;
+    document.getElementById('statOutOfStock').textContent = `${summary.outOfStockCount} out of stock`;
+    document.getElementById('statRevenueToday').textContent = formatCurrency(summary.revenueToday);
+    document.getElementById('statSalesToday').textContent = `${summary.salesToday} sale${summary.salesToday === 1 ? '' : 's'}`;
+    document.getElementById('statOpenOrders').textContent = summary.openOrders;
+    const overdueEl = document.getElementById('statOverdue');
+    overdueEl.textContent = summary.overdueOrders ? `${summary.overdueOrders} overdue` : 'none overdue';
+    overdueEl.classList.toggle('qty-low', summary.overdueOrders > 0);
 
     const body = document.getElementById('activityBody');
     if (!summary.recentActivity.length) {
