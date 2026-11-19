@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purchase Order</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; background: #eee; margin: 0; padding: 20px; color: #222; font-size: 13px; }
+  .sheet { max-width: 780px; margin: 0 auto; background: #fff; padding: 36px 40px; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #2c3e50; padding-bottom: 14px; }
+  .head h1 { margin: 0; font-size: 22px; color: #2c3e50; letter-spacing: 1px; }
+  .shop { text-align: right; }
+  .shop strong { font-size: 15px; }
+  .parties { display: flex; gap: 40px; margin: 20px 0; }
+  .parties div { flex: 1; }
+  .parties h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; color: #777; letter-spacing: .5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th { background: #2c3e50; color: #fff; text-align: left; padding: 7px 8px; font-size: 12px; }
+  td { padding: 7px 8px; border-bottom: 1px solid #e5e5e5; }
+  .r { text-align: right; }
+  .total td { font-weight: bold; font-size: 15px; border-bottom: none; border-top: 2px solid #2c3e50; }
+  .notes { margin-top: 20px; padding: 10px; background: #f6f7f8; border-left: 3px solid #2c3e50; }
+  .sign { display: flex; gap: 40px; margin-top: 50px; }
+  .sign div { flex: 1; border-top: 1px solid #999; padding-top: 4px; font-size: 11px; color: #777; }
+  .stamp { display: inline-block; padding: 2px 8px; border: 1px solid; border-radius: 3px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-top: 4px; }
+  .actions { text-align: center; margin: 0 auto 16px; }
+  .actions button { padding: 8px 18px; margin: 0 4px; cursor: pointer; border-radius: 4px; border: 1px solid #2c3e50; background: #2c3e50; color: #fff; }
+  .actions button.secondary { background: #fff; color: #2c3e50; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .sheet { box-shadow: none; padding: 0; max-width: none; }
+    .actions { display: none; }
+    th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+  <div class="actions">
+    <button onclick="window.print()">Print / Save as PDF</button>
+    <button class="secondary" onclick="window.close()">Close</button>
+  </div>
+  <div class="sheet" id="sheet">Loading...</div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    requireAuth();
+    const amt = (n) => Number(n).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const day = (v) => v ? new Date(v).toLocaleDateString() : '—';
+
+    (async function () {
+      const sheet = document.getElementById('sheet');
+      const id = new URLSearchParams(location.search).get('id');
+      try {
+        const po = await api.get(`/purchase-orders/${encodeURIComponent(id)}`);
+        document.title = po.po_number;
+        sheet.innerHTML = `
+          <div class="head">
+            <div>
+              <h1>PURCHASE ORDER</h1>
+              <div><strong>${esc(po.po_number)}</strong></div>
+              <div>Date: ${day(po.ordered_at || po.created_at)}</div>
+              ${po.status !== 'ordered' ? `<div class="stamp">${esc(po.status.replace('_', ' '))}</div>` : ''}
+            </div>
+            <div class="shop">
+              <strong>${esc(po.shop.name)}</strong><br>
+              ${esc(po.shop.address)}<br>
+              ${po.shop.phone ? 'Tel: ' + esc(po.shop.phone) : ''}
+            </div>
+          </div>
+          <div class="parties">
+            <div>
+              <h4>Supplier</h4>
+              <strong>${esc(po.supplier_name || '—')}</strong><br>
+              ${po.contact_person ? 'Attn: ' + esc(po.contact_person) + '<br>' : ''}
+              ${po.supplier_address ? esc(po.supplier_address) + '<br>' : ''}
+              ${po.supplier_phone ? esc(po.supplier_phone) + '<br>' : ''}
+              ${po.supplier_email ? esc(po.supplier_email) : ''}
+            </div>
+            <div>
+              <h4>Delivery</h4>
+              Expected by: <strong>${day(po.expected_date)}</strong><br>
+              Prepared by: ${esc(po.created_by_name || '—')}
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>#</th><th>Product</th><th>SKU</th><th class="r">Qty</th><th class="r">Unit cost</th><th class="r">Amount (KSh)</th></tr></thead>
+            <tbody>
+              ${po.items.map((i, n) => `
+                <tr><td>${n + 1}</td><td>${esc(i.product_name)}</td><td>${esc(i.sku || '')}</td>
+                <td class="r">${i.quantity_ordered}</td><td class="r">${amt(i.unit_cost)}</td><td class="r">${amt(i.line_total)}</td></tr>`).join('')}
+              <tr class="total"><td colspan="5" class="r">TOTAL</td><td class="r">${amt(po.total_cost)}</td></tr>
+            </tbody>
+          </table>
+          ${po.notes ? `<div class="notes"><strong>Notes:</strong> ${esc(po.notes)}</div>` : ''}
+          <div class="sign"><div>Authorised by</div><div>Received by (supplier)</div></div>`;
+      } catch (err) {
+        sheet.textContent = err.message;
+      }
+    })();
+  </script>
+</body>
+</html>
