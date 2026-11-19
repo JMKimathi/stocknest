@@ -1,18 +1,19 @@
 const pool = require('../config/db');
 
-// GET /api/products?search=&category_id=&lowStock=true
+// GET /api/products?search=&category_id=&lowStock=true&archived=true
 async function getProducts(req, res) {
   try {
-    const { search, category_id, supplier_id, lowStock } = req.query;
+    const { search, category_id, supplier_id, lowStock, archived } = req.query;
 
     let sql = `
       SELECT p.*, c.name AS category_name, s.name AS supplier_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN suppliers s ON p.supplier_id = s.id
-      WHERE 1 = 1
+      WHERE p.is_archived = ?
     `;
-    const params = [];
+    // Archived products are hidden unless ?archived=true is asked for
+    const params = [archived === 'true' ? 1 : 0];
 
     if (search) {
       sql += ' AND (p.name LIKE ? OR p.sku LIKE ?)';
@@ -127,12 +128,39 @@ async function updateProduct(req, res) {
   }
 }
 
+// DELETE /api/products/:id
+// Products with stock history are archived (hidden, history kept).
+// Only a product that never had any stock movement is removed for good.
 async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
-    const [result] = await pool.query('DELETE FROM products WHERE id = ?', [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'Product not found' });
-    res.json({ message: 'Product deleted successfully' });
+    const [[product]] = await pool.query('SELECT id FROM products WHERE id = ?', [id]);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const [[{ txCount }]] = await pool.query(
+      'SELECT COUNT(*) AS txCount FROM stock_transactions WHERE product_id = ?', [id]
+    );
+
+    if (txCount > 0) {
+      await pool.query('UPDATE products SET is_archived = 1 WHERE id = ?', [id]);
+      return res.json({ message: 'Product archived. Its stock history has been kept.', archived: true });
+    }
+
+    await pool.query('DELETE FROM products WHERE id = ?', [id]);
+    res.json({ message: 'Product deleted successfully', archived: false });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+// PATCH /api/products/:id/restore
+async function restoreProduct(req, res) {
+  try {
+    const [result] = await pool.query(
+      'UPDATE products SET is_archived = 0 WHERE id = ? AND is_archived = 1', [req.params.id]
+    );
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Archived product not found' });
+    res.json({ message: 'Product restored' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -159,6 +187,10 @@ async function adjustStock(req, res) {
     if (!product) {
       await connection.rollback();
       return res.status(404).json({ message: 'Product not found' });
+    }
+    if (product.is_archived) {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Restore this product before changing its stock' });
     }
 
     let newQuantity = product.quantity;
@@ -208,12 +240,12 @@ async function getProductHistory(req, res) {
 // GET /api/products/summary/dashboard
 async function getDashboardSummary(req, res) {
   try {
-    const [[{ totalItems }]] = await pool.query('SELECT COUNT(*) AS totalItems FROM products');
+    const [[{ totalItems }]] = await pool.query('SELECT COUNT(*) AS totalItems FROM products WHERE is_archived = 0');
     const [[{ totalValue }]] = await pool.query(
-      'SELECT COALESCE(SUM(quantity * unit_price), 0) AS totalValue FROM products'
+      'SELECT COALESCE(SUM(quantity * unit_price), 0) AS totalValue FROM products WHERE is_archived = 0'
     );
     const [[{ lowStockCount }]] = await pool.query(
-      'SELECT COUNT(*) AS lowStockCount FROM products WHERE quantity <= reorder_level'
+      'SELECT COUNT(*) AS lowStockCount FROM products WHERE is_archived = 0 AND quantity <= reorder_level'
     );
     const [recentActivity] = await pool.query(
       `SELECT t.*, p.name AS product_name, u.name AS user_name
@@ -231,6 +263,6 @@ async function getDashboardSummary(req, res) {
 }
 
 module.exports = {
-  getProducts, getProductById, createProduct, updateProduct, deleteProduct,
+  getProducts, getProductById, createProduct, updateProduct, deleteProduct, restoreProduct,
   adjustStock, getProductHistory, getDashboardSummary
 };

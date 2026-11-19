@@ -28,11 +28,12 @@ async function login(req, res) {
     }
 
     limiter.clearFailures(req);
+    await pool.query('UPDATE users SET last_login_at = NOW() WHERE id = ?', [user.id]);
 
     const token = generateToken(user);
     res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar || null }
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });

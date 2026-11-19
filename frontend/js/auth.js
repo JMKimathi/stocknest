@@ -25,6 +25,32 @@ function requireAdmin() {
   return user;
 }
 
+// Small round photo, or the person's initials when there is no photo
+function avatarHtml(user, size = 32) {
+  if (user && user.avatar) {
+    return `<img class="avatar" src="${esc(user.avatar)}" alt="" style="width:${size}px;height:${size}px">`;
+  }
+  const initials = String((user && user.name) || '?')
+    .split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  return `<span class="avatar initials" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px">${esc(initials)}</span>`;
+}
+
+function renderUserChip(user) {
+  const chip = document.getElementById('userChip');
+  if (!chip) return;
+  chip.innerHTML = `<a href="profile.html" class="chip-link" title="My profile">
+      ${avatarHtml(user, 28)}
+      <span>${esc(user.name)} <span class="role-badge">(${esc(user.role)})</span></span>
+    </a>`;
+}
+
+function saveCurrentUser(changes) {
+  const user = { ...getCurrentUser(), ...changes };
+  localStorage.setItem('sn_user', JSON.stringify(user));
+  renderUserChip(user);
+  return user;
+}
+
 function logout() {
   localStorage.removeItem('sn_token');
   localStorage.removeItem('sn_user');
@@ -38,10 +64,7 @@ function initShell(activePage) {
 
   document.body.classList.add(`role-${user.role}`);
 
-  const chip = document.getElementById('userChip');
-  if (chip) {
-    chip.innerHTML = `${esc(user.name)} <span class="role-badge">(${esc(user.role)})</span>`;
-  }
+  renderUserChip(user);
 
   const navLink = document.querySelector(`.sidebar nav a[data-page="${activePage}"]`);
   if (navLink) navLink.classList.add('active');

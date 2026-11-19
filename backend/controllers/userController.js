@@ -5,7 +5,7 @@ const pool = require('../config/db');
 async function getUsers(req, res) {
   try {
     const [rows] = await pool.query(
-      'SELECT id, name, email, role, is_active, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, name, email, phone, avatar, role, is_active, last_login_at, created_at FROM users ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {
@@ -96,10 +96,28 @@ async function deleteUser(req, res) {
       return res.status(400).json({ message: 'You cannot delete your own account' });
     }
 
-    const [result] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'User not found' });
+    const [[target]] = await pool.query('SELECT id, role, is_active FROM users WHERE id = ?', [id]);
+    if (!target) return res.status(404).json({ message: 'User not found' });
+
+    // Deleting a user would also delete every stock movement they recorded,
+    // which breaks the audit trail. Such users must be disabled instead.
+    const [[{ txCount }]] = await pool.query(
+      'SELECT COUNT(*) AS txCount FROM stock_transactions WHERE user_id = ?', [id]
+    );
+    if (txCount > 0) {
+      return res.status(409).json({
+        message: `This user has ${txCount} stock record(s) in the history. Disable the account instead of deleting it.`
+      });
     }
+
+    if (target.role === 'admin' && target.is_active) {
+      const [[{ admins }]] = await pool.query(
+        "SELECT COUNT(*) AS admins FROM users WHERE role = 'admin' AND is_active = 1"
+      );
+      if (admins <= 1) return res.status(400).json({ message: 'There must be at least one active admin' });
+    }
+
+    await pool.query('DELETE FROM users WHERE id = ?', [id]);
     res.json({ message: 'User deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });

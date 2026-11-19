@@ -28,11 +28,26 @@ async function updateSupplier(req, res) {
   try {
     const { id } = req.params;
     const { name, contact_person, phone, email, address } = req.body;
-    const [result] = await pool.query(
+
+    const [existing] = await pool.query('SELECT * FROM suppliers WHERE id = ?', [id]);
+    const s = existing[0];
+    if (!s) return res.status(404).json({ message: 'Supplier not found' });
+    if (name !== undefined && !String(name).trim()) {
+      return res.status(400).json({ message: 'Supplier name cannot be empty' });
+    }
+
+    // Fields that were not sent keep their current value
+    await pool.query(
       'UPDATE suppliers SET name = ?, contact_person = ?, phone = ?, email = ?, address = ? WHERE id = ?',
-      [name, contact_person, phone, email, address, id]
+      [
+        name ?? s.name,
+        contact_person ?? s.contact_person,
+        phone ?? s.phone,
+        email ?? s.email,
+        address ?? s.address,
+        id
+      ]
     );
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'Supplier not found' });
     res.json({ message: 'Supplier updated successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });

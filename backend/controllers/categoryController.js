@@ -31,13 +31,23 @@ async function updateCategory(req, res) {
   try {
     const { id } = req.params;
     const { name, description } = req.body;
-    const [result] = await pool.query(
+
+    const [existing] = await pool.query('SELECT * FROM categories WHERE id = ?', [id]);
+    if (!existing[0]) return res.status(404).json({ message: 'Category not found' });
+    if (name !== undefined && !String(name).trim()) {
+      return res.status(400).json({ message: 'Category name cannot be empty' });
+    }
+
+    // Fields that were not sent keep their current value
+    await pool.query(
       'UPDATE categories SET name = ?, description = ? WHERE id = ?',
-      [name, description, id]
+      [name ?? existing[0].name, description ?? existing[0].description, id]
     );
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'Category not found' });
     res.json({ message: 'Category updated successfully' });
   } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'Another category already has this name' });
+    }
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 }

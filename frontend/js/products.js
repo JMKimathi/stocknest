@@ -44,8 +44,27 @@ function renderProducts(products) {
 
   body.innerHTML = products.map(p => {
     const isLow = p.quantity <= p.reorder_level;
-    const deleteBtn = currentUser.role === 'admin'
-      ? `<button class="danger small" onclick="deleteProduct(${p.id})">Delete</button>`
+    const isAdmin = currentUser.role === 'admin';
+
+    if (p.is_archived) {
+      return `
+      <tr class="archived-row">
+        <td class="sku">${esc(p.sku)}</td>
+        <td>${esc(p.name)}</td>
+        <td>${esc(p.category_name || '—')}</td>
+        <td>${esc(p.supplier_name || '—')}</td>
+        <td>${p.quantity}</td>
+        <td>${formatMoney(p.unit_price)}</td>
+        <td><span class="badge neutral">Archived</span></td>
+        <td class="actions">
+          <button class="secondary small" onclick="openHistoryModal(${p.id})">History</button>
+          ${isAdmin ? `<button class="small" onclick="restoreProduct(${p.id})">Restore</button>` : ''}
+        </td>
+      </tr>`;
+    }
+
+    const deleteBtn = isAdmin
+      ? `<button class="danger small" onclick="deleteProduct(${p.id})">Archive</button>`
       : '';
     return `
       <tr>
@@ -78,11 +97,14 @@ async function loadProducts() {
   const search = document.getElementById('searchInput').value.trim();
   const category_id = document.getElementById('categoryFilter').value;
   const lowStock = document.getElementById('lowStockFilter').value;
+  const archivedSel = document.getElementById('archivedFilter');
+  const archived = archivedSel ? archivedSel.value : '';
 
   const params = new URLSearchParams();
   if (search) params.set('search', search);
   if (category_id) params.set('category_id', category_id);
   if (lowStock) params.set('lowStock', lowStock);
+  if (archived) params.set('archived', archived);
 
   try {
     const products = await api.get(`/products?${params.toString()}`);
@@ -99,6 +121,7 @@ document.getElementById('searchInput').addEventListener('input', () => {
 });
 document.getElementById('categoryFilter').addEventListener('change', loadProducts);
 document.getElementById('lowStockFilter').addEventListener('change', loadProducts);
+document.getElementById('archivedFilter')?.addEventListener('change', loadProducts);
 
 // ---------- Add / Edit product ----------
 document.getElementById('addProductBtn').addEventListener('click', () => {
@@ -165,10 +188,20 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
 });
 
 async function deleteProduct(id) {
-  if (!confirm('Delete this product permanently? This cannot be undone.')) return;
+  if (!confirm('Archive this product? It will be hidden but its stock history is kept. (A product with no history is deleted.)')) return;
   try {
-    await api.del(`/products/${id}`);
-    showAlert('Product deleted.', 'success');
+    const res = await api.del(`/products/${id}`);
+    showAlert(res.message, 'success');
+    loadProducts();
+  } catch (err) {
+    showAlert(err.message);
+  }
+}
+
+async function restoreProduct(id) {
+  try {
+    await api.patch(`/products/${id}/restore`);
+    showAlert('Product restored.', 'success');
     loadProducts();
   } catch (err) {
     showAlert(err.message);

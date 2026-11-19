@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockNest — My Profile</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">StockNest</div>
+      <nav>
+        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
+        <a href="products.html" data-page="products">Products</a>
+        <a href="categories.html" data-page="categories">Categories</a>
+        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
+        <a href="users.html" data-page="users" class="admin-only">Users</a>
+        <a href="profile.html" data-page="profile">My profile</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>My profile</h1>
+        <div class="topbar-actions">
+          <div class="user-chip" id="userChip"></div>
+          <button class="secondary small" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div id="pageAlert" class="alert" style="display:none;"></div>
+
+      <div class="profile-grid">
+        <div class="card profile-card">
+          <div id="profileAvatar" class="profile-avatar"></div>
+          <h2 id="profileName">—</h2>
+          <div class="muted" id="profileEmail"></div>
+          <span class="badge neutral" id="profileRole"></span>
+          <div class="avatar-actions">
+            <label class="button-like secondary small" for="avatarInput">Change photo</label>
+            <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/webp" hidden>
+            <button class="secondary small" id="removeAvatarBtn">Remove</button>
+          </div>
+          <dl class="profile-meta">
+            <dt>Member since</dt><dd id="metaCreated">—</dd>
+            <dt>Last login</dt><dd id="metaLastLogin">—</dd>
+            <dt>Stock movements</dt><dd id="metaMovements">—</dd>
+            <dt>Stock in / out</dt><dd id="metaInOut">—</dd>
+          </dl>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3>Personal details</h3>
+            <div id="detailsError" class="alert error" style="display:none;"></div>
+            <form id="detailsForm">
+              <label>Full name</label>
+              <input type="text" id="nameInput" required>
+              <div class="form-row">
+                <div>
+                  <label>Email</label>
+                  <input type="email" id="emailInput" required>
+                </div>
+                <div>
+                  <label>Phone</label>
+                  <input type="tel" id="phoneInput" placeholder="+254 7XX XXX XXX">
+                </div>
+              </div>
+              <div class="modal-actions"><button type="submit">Save details</button></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3>Change password</h3>
+            <div id="passwordError" class="alert error" style="display:none;"></div>
+            <form id="passwordForm">
+              <label>Current password</label>
+              <input type="password" id="currentPassword" autocomplete="current-password" required>
+              <div class="form-row">
+                <div>
+                  <label>New password</label>
+                  <input type="password" id="newPassword" autocomplete="new-password" required>
+                </div>
+                <div>
+                  <label>Confirm new password</label>
+                  <input type="password" id="confirmPassword" autocomplete="new-password" required>
+                </div>
+              </div>
+              <div class="muted small-text">At least 8 characters, with letters and numbers.</div>
+              <div class="modal-actions"><button type="submit">Update password</button></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3>My recent stock activity</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Product</th><th>Type</th><th>Qty</th><th>Reason</th><th>When</th></tr></thead>
+                <tbody id="recentBody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/profile.js"></script>
+</body>
+</html>

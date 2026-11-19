@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getProducts, getProductById, createProduct, updateProduct, deleteProduct,
+  getProducts, getProductById, createProduct, updateProduct, deleteProduct, restoreProduct,
   adjustStock, getProductHistory, getDashboardSummary
 } = require('../controllers/productController');
 const protect = require('../middleware/authMiddleware');
@@ -19,7 +19,8 @@ router.post('/', createProduct);
 router.post('/:id/stock', adjustStock);
 router.put('/:id', updateProduct);
 
-// Only admin can permanently delete a product
+// Only admin can archive/delete or restore a product
 router.delete('/:id', adminOnly, deleteProduct);
+router.patch('/:id/restore', adminOnly, restoreProduct);
 
 module.exports = router;

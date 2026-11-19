@@ -20,7 +20,7 @@ async function loadUsers() {
     const body = document.getElementById('tableBody');
     body.innerHTML = usersCache.map(u => `
       <tr>
-        <td>${esc(u.name)}</td>
+        <td><div class="name-cell">${avatarHtml(u, 28)}<span>${esc(u.name)}</span></div></td>
         <td>${esc(u.email)}</td>
         <td><span class="badge ${u.role === 'admin' ? 'ok' : 'neutral'}">${esc(u.role)}</span></td>
         <td><span class="badge ${u.is_active ? 'ok' : 'low'}">${u.is_active ? 'Active' : 'Disabled'}</span></td>
@@ -103,7 +103,7 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
 });
 
 async function deleteItem(id) {
-  if (!confirm('Delete this user account permanently?')) return;
+  if (!confirm('Delete this user account permanently? Users with stock history can only be disabled.')) return;
   try {
     await api.del(`/users/${id}`);
     showAlert('User deleted.', 'success');

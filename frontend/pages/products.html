@@ -16,6 +16,7 @@
         <a href="categories.html" data-page="categories">Categories</a>
         <a href="suppliers.html" data-page="suppliers">Suppliers</a>
         <a href="users.html" data-page="users" class="admin-only">Users</a>
+        <a href="profile.html" data-page="profile">My profile</a>
       </nav>
     </aside>
 
@@ -38,6 +39,10 @@
             <select id="lowStockFilter">
               <option value="">All stock levels</option>
               <option value="true">Low stock only</option>
+            </select>
+            <select id="archivedFilter" class="admin-only">
+              <option value="">Active products</option>
+              <option value="true">Archived products</option>
             </select>
           </div>
           <button id="addProductBtn">Add product</button>
