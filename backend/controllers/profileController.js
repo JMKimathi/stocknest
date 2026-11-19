@@ -92,7 +92,7 @@ async function changePassword(req, res) {
     }
 
     const hash = await bcrypt.hash(newPassword, 10);
-    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.user.id]);
+    await pool.query('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?', [hash, req.user.id]);
     await logActivity(req, { action: 'profile.password', entityType: 'user', entityId: req.user.id, details: 'Changed own password' });
     res.json({ message: 'Password changed successfully' });
   } catch (err) {

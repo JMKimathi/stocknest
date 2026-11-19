@@ -1,12 +1,15 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 const logActivity = require('../utils/activity');
+const { notify } = require('../utils/notify');
+const { passwordProblem, temporaryPassword, EMAIL_RE } = require('../utils/passwords');
 
 // GET /api/users
 async function getUsers(req, res) {
   try {
     const [rows] = await pool.query(
-      'SELECT id, name, email, phone, avatar, role, is_active, last_login_at, created_at FROM users ORDER BY created_at DESC'
+      `SELECT id, name, email, phone, avatar, role, is_active, is_approved, must_change_password, last_login_at, created_at
+       FROM users ORDER BY is_approved ASC, created_at DESC`
     );
     res.json(rows);
   } catch (err) {
@@ -22,6 +25,9 @@ async function createUser(req, res) {
       return res.status(400).json({ message: 'Name, email and password are required' });
     }
     const validRole = role === 'admin' ? 'admin' : 'staff';
+    const problem = passwordProblem(password);
+    if (problem) return res.status(400).json({ message: problem });
+    if (!EMAIL_RE.test(String(email).trim())) return res.status(400).json({ message: 'Enter a valid email address' });
 
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) {
@@ -30,8 +36,9 @@ async function createUser(req, res) {
 
     const password_hash = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name, email, password_hash, validRole]
+      // The admin chose this password, so the person must replace it at first sign-in
+      'INSERT INTO users (name, email, password_hash, role, must_change_password) VALUES (?, ?, ?, ?, 1)',
+      [name, String(email).trim().toLowerCase(), password_hash, validRole]
     );
 
     await logActivity(req, { action: 'user.create', entityType: 'user', entityId: result.insertId, details: `Created ${validRole} account for ${name} (${email})` });
@@ -137,4 +144,44 @@ async function deleteUser(req, res) {
   }
 }
 
-module.exports = { getUsers, createUser, updateUser, deleteUser };
+// POST /api/users/:id/approve  (accept a sign-up request)
+async function approveUser(req, res) {
+  try {
+    const [[user]] = await pool.query('SELECT id, name, email, is_approved FROM users WHERE id = ?', [req.params.id]);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.is_approved) return res.status(400).json({ message: 'This account is already approved' });
+
+    await pool.query('UPDATE users SET is_approved = 1, is_active = 1 WHERE id = ?', [user.id]);
+    await logActivity(req, { action: 'user.approve', entityType: 'user', entityId: user.id, details: `Approved account for ${user.name} (${user.email})` });
+    await notify({ userIds: [user.id] }, {
+      type: 'account_approved', title: 'Welcome to StockNest!',
+      message: `${req.user.name} approved your account.`, link: 'dashboard.html'
+    });
+    res.json({ message: `${user.name} can now sign in` });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+// POST /api/users/:id/reset-password
+// Sets a temporary password (shown once to the admin) that must be changed at next sign-in.
+async function resetUserPassword(req, res) {
+  try {
+    const [[user]] = await pool.query('SELECT id, name, email FROM users WHERE id = ?', [req.params.id]);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.id === req.user.id) {
+      return res.status(400).json({ message: 'Change your own password from My profile' });
+    }
+
+    const temporary = temporaryPassword();
+    const hash = await bcrypt.hash(temporary, 10);
+    await pool.query('UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?', [hash, user.id]);
+    await logActivity(req, { action: 'user.reset_password', entityType: 'user', entityId: user.id, details: `Reset the password of ${user.name}` });
+
+    res.json({ message: 'Password reset', temporaryPassword: temporary, email: user.email, name: user.name });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+module.exports = { getUsers, createUser, updateUser, deleteUser, approveUser, resetUserPassword };

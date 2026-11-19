@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS users (
   avatar MEDIUMTEXT,
   role ENUM('admin', 'staff') NOT NULL DEFAULT 'staff',
   is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_approved TINYINT NOT NULL DEFAULT 1,
+  must_change_password TINYINT NOT NULL DEFAULT 0,
   last_login_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

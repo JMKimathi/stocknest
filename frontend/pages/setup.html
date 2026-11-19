@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set up StockNest</title>
+<script src="../js/theme.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-auth-page="setup">
+  <div class="auth-page">
+    <aside class="auth-hero">
+      <div class="brand" style="color:#fff">
+        <span class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 3 3 7.5l9 4.5 9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5 12 21l9-4.5"/></svg></span>
+        StockNest
+      </div>
+      <div>
+        <h2>Let's set up <em>your shop.</em></h2>
+        <p class="lead">This is a fresh StockNest. Create the owner account first. It has full admin rights, and you can invite your staff afterwards.</p>
+        <ul class="feature-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Step 1: create the owner (admin) account</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Step 2: add categories, suppliers and products, or import a CSV</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Step 3: approve your staff when they sign up</li>
+        </ul>
+      </div>
+      <div class="foot">This page only works once, while there are no accounts yet.</div>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <div class="brand mobile-brand">
+          <span class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 3 3 7.5l9 4.5 9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5"/><path d="M3 16.5 12 21l9-4.5"/></svg></span>
+          StockNest
+        </div>
+        <div class="steps"><span class="on"></span><span></span><span></span></div>
+        <h1>Create the owner account</h1>
+        <p class="subtitle">You'll be signed in straight away.</p>
+
+        <div id="formError" class="alert error" role="alert"></div>
+
+        <form id="setupForm" novalidate>
+          <label for="name">Your name</label>
+          <input type="text" id="name" required autocomplete="name" placeholder="e.g. Ada Mwangi" autofocus>
+
+          <label for="email">Email</label>
+          <input type="email" id="email" required autocomplete="email" placeholder="owner@shop.co.ke">
+
+          <label for="password">Password</label>
+          <div class="password-field">
+            <input type="password" id="password" required autocomplete="new-password" placeholder="At least 8 characters, letters and numbers">
+            <button type="button" class="toggle-pw">Show</button>
+          </div>
+          <div class="strength"><span></span></div>
+          <div class="strength-label"></div>
+
+          <label for="confirmPassword">Confirm password</label>
+          <div class="password-field">
+            <input type="password" id="confirmPassword" required autocomplete="new-password" placeholder="Type it again">
+            <button type="button" class="toggle-pw">Show</button>
+          </div>
+
+          <button type="submit" id="submitBtn">Create account &amp; open StockNest</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth-pages.js"></script>
+</body>
+</html>
