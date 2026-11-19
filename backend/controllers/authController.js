@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 const generateToken = require('../utils/generateToken');
 const limiter = require('../utils/loginLimiter');
+const logActivity = require('../utils/activity');
 
 // POST /api/auth/login
 async function login(req, res) {
@@ -21,6 +22,10 @@ async function login(req, res) {
     const match = user ? await bcrypt.compare(password, user.password_hash) : false;
     if (!user || !match) {
       limiter.recordFailure(req);
+      await logActivity(req, {
+        action: 'auth.login_failed', entityType: 'auth',
+        details: `Failed login for ${String(email).slice(0, 150)}`, user: user || null
+      });
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     if (!user.is_active) {
@@ -29,6 +34,7 @@ async function login(req, res) {
 
     limiter.clearFailures(req);
     await pool.query('UPDATE users SET last_login_at = NOW() WHERE id = ?', [user.id]);
+    await logActivity(req, { action: 'auth.login', entityType: 'auth', entityId: user.id, details: 'Signed in', user });
 
     const token = generateToken(user);
     res.json({

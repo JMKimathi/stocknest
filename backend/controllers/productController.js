@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const logActivity = require('../utils/activity');
 
 // GET /api/products?search=&category_id=&lowStock=true&archived=true
 async function getProducts(req, res) {
@@ -83,6 +84,7 @@ async function createProduct(req, res) {
       );
     }
 
+    await logActivity(req, { action: 'product.create', entityType: 'product', entityId: result.insertId, details: `Added product "${name}" (${sku}) with ${quantity || 0} in stock` });
     res.status(201).json({ id: result.insertId, name, sku });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
@@ -119,6 +121,17 @@ async function updateProduct(req, res) {
       ]
     );
 
+    const changes = [];
+    if (unit_price !== undefined && Number(unit_price) !== Number(existing[0].unit_price)) {
+      changes.push(`price ${existing[0].unit_price} -> ${unit_price}`);
+    }
+    if (reorder_level !== undefined && Number(reorder_level) !== Number(existing[0].reorder_level)) {
+      changes.push(`reorder level ${existing[0].reorder_level} -> ${reorder_level}`);
+    }
+    await logActivity(req, {
+      action: 'product.update', entityType: 'product', entityId: Number(id),
+      details: `Updated product "${name ?? existing[0].name}"${changes.length ? ': ' + changes.join(', ') : ''}`
+    });
     res.json({ message: 'Product updated successfully' });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
@@ -134,7 +147,7 @@ async function updateProduct(req, res) {
 async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
-    const [[product]] = await pool.query('SELECT id FROM products WHERE id = ?', [id]);
+    const [[product]] = await pool.query('SELECT id, name FROM products WHERE id = ?', [id]);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
     const [[{ txCount }]] = await pool.query(
@@ -143,10 +156,12 @@ async function deleteProduct(req, res) {
 
     if (txCount > 0) {
       await pool.query('UPDATE products SET is_archived = 1 WHERE id = ?', [id]);
+      await logActivity(req, { action: 'product.archive', entityType: 'product', entityId: Number(id), details: `Archived product "${product.name}"` });
       return res.json({ message: 'Product archived. Its stock history has been kept.', archived: true });
     }
 
     await pool.query('DELETE FROM products WHERE id = ?', [id]);
+    await logActivity(req, { action: 'product.delete', entityType: 'product', entityId: Number(id), details: `Deleted product "${product.name}"` });
     res.json({ message: 'Product deleted successfully', archived: false });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -160,6 +175,7 @@ async function restoreProduct(req, res) {
       'UPDATE products SET is_archived = 0 WHERE id = ? AND is_archived = 1', [req.params.id]
     );
     if (result.affectedRows === 0) return res.status(404).json({ message: 'Archived product not found' });
+    await logActivity(req, { action: 'product.restore', entityType: 'product', entityId: Number(req.params.id), details: 'Restored product from archive' });
     res.json({ message: 'Product restored' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -211,6 +227,11 @@ async function adjustStock(req, res) {
     );
 
     await connection.commit();
+    await logActivity(req, {
+      action: `stock.${type}`, entityType: 'product', entityId: Number(id),
+      details: `${type === 'adjustment' ? 'Set stock of' : type === 'in' ? 'Stock in for' : 'Stock out for'} "${product.name}": ` +
+        `${type === 'adjustment' ? '' : quantity + ' units, '}${product.quantity} -> ${newQuantity}${reason ? ` (${reason})` : ''}`
+    });
     res.json({ message: 'Stock updated successfully', quantity: newQuantity });
   } catch (err) {
     await connection.rollback();

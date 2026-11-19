@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
+const logActivity = require('../utils/activity');
 
 const MAX_AVATAR_LENGTH = 400 * 1024; // ~300 KB image once base64 encoded
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -59,6 +60,7 @@ async function updateProfile(req, res) {
       'UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?',
       [newName, newEmail, newPhone, req.user.id]
     );
+    await logActivity(req, { action: 'profile.update', entityType: 'user', entityId: req.user.id, details: 'Updated own profile details' });
     res.json({
       message: 'Profile updated',
       user: { id: current.id, name: newName, email: newEmail, phone: newPhone, role: current.role }
@@ -91,6 +93,7 @@ async function changePassword(req, res) {
 
     const hash = await bcrypt.hash(newPassword, 10);
     await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.user.id]);
+    await logActivity(req, { action: 'profile.password', entityType: 'user', entityId: req.user.id, details: 'Changed own password' });
     res.json({ message: 'Password changed successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -110,6 +113,7 @@ async function updateAvatar(req, res) {
       }
     }
     await pool.query('UPDATE users SET avatar = ? WHERE id = ?', [avatar, req.user.id]);
+    await logActivity(req, { action: 'profile.avatar', entityType: 'user', entityId: req.user.id, details: avatar ? 'Changed profile photo' : 'Removed profile photo' });
     res.json({ message: avatar ? 'Photo updated' : 'Photo removed', avatar });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
