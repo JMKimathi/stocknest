@@ -59,7 +59,7 @@ async function createSale(req, res) {
         return res.status(400).json({ message: `Only ${p.quantity} of "${p.name}" left in stock` });
       }
       // Prices always come from the database, never from the browser
-      lines.push({ p, qty, unitPrice: money(p.unit_price), lineTotal: money(p.unit_price * qty) });
+      lines.push({ p, qty, unitPrice: money(p.unit_price), unitCost: money(p.cost_price || 0), lineTotal: money(p.unit_price * qty) });
     }
 
     const subtotal = money(lines.reduce((sum, l) => sum + l.lineTotal, 0));
@@ -94,9 +94,9 @@ async function createSale(req, res) {
 
     for (const l of lines) {
       await connection.query(
-        `INSERT INTO sale_items (sale_id, product_id, product_name, sku, quantity, unit_price, line_total)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [saleId, l.p.id, l.p.name, l.p.sku, l.qty, l.unitPrice, l.lineTotal]
+        `INSERT INTO sale_items (sale_id, product_id, product_name, sku, quantity, unit_price, unit_cost, line_total)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [saleId, l.p.id, l.p.name, l.p.sku, l.qty, l.unitPrice, l.unitCost, l.lineTotal]
       );
       await connection.query('UPDATE products SET quantity = quantity - ? WHERE id = ?', [l.qty, l.p.id]);
       await connection.query(

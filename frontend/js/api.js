@@ -47,10 +47,31 @@ async function apiRequest(path, { method = 'GET', body, auth = true } = {}) {
   return data;
 }
 
+// Downloads a file (e.g. a CSV export) from an endpoint that needs the login token
+async function apiDownload(path) {
+  const token = localStorage.getItem('sn_token');
+  const res = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) {
+    let message = 'Download failed';
+    try { message = (await res.json()).message || message; } catch (_) { /* not JSON */ }
+    throw new Error(message);
+  }
+  const match = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '');
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = match ? match[1] : 'export.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 const api = {
   get: (path) => apiRequest(path),
   post: (path, body) => apiRequest(path, { method: 'POST', body }),
   put: (path, body) => apiRequest(path, { method: 'PUT', body }),
   patch: (path, body) => apiRequest(path, { method: 'PATCH', body }),
-  del: (path) => apiRequest(path, { method: 'DELETE' })
+  del: (path) => apiRequest(path, { method: 'DELETE' }),
+  download: apiDownload
 };

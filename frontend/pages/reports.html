@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockNest — Reports</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">StockNest</div>
+      <nav>
+        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
+        <a href="products.html" data-page="products">Products</a>
+        <a href="sales.html" data-page="sales">Sales</a>
+        <a href="purchase-orders.html" data-page="purchase-orders">Purchase orders</a>
+        <a href="reports.html" data-page="reports" class="admin-only">Reports</a>
+        <a href="categories.html" data-page="categories">Categories</a>
+        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
+        <a href="users.html" data-page="users" class="admin-only">Users</a>
+        <a href="activity.html" data-page="activity" class="admin-only">Activity log</a>
+        <a href="profile.html" data-page="profile">My profile</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Reports</h1>
+        <div class="topbar-actions">
+          <div class="user-chip" id="userChip"></div>
+          <button class="secondary small" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div id="pageAlert" class="alert" style="display:none;"></div>
+
+      <div class="card range-bar">
+        <div class="status-pills" id="presets">
+          <button class="pill" data-preset="today">Today</button>
+          <button class="pill" data-preset="7">Last 7 days</button>
+          <button class="pill active" data-preset="30">Last 30 days</button>
+          <button class="pill" data-preset="month">This month</button>
+          <button class="pill" data-preset="year">This year</button>
+        </div>
+        <div class="filters">
+          <input type="date" id="fromDate" title="From">
+          <span class="muted">to</span>
+          <input type="date" id="toDate" title="To">
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card accent"><div class="label">Revenue</div><div class="value" id="kRevenue">—</div><div class="sub" id="kSales"></div></div>
+        <div class="stat-card"><div class="label">Gross profit</div><div class="value" id="kProfit">—</div><div class="sub" id="kMargin"></div></div>
+        <div class="stat-card"><div class="label">Average sale</div><div class="value" id="kAvg">—</div><div class="sub" id="kUnits"></div></div>
+        <div class="stat-card warning"><div class="label">Purchases placed</div><div class="value" id="kPurchases">—</div><div class="sub" id="kPoCount"></div></div>
+      </div>
+
+      <div class="card">
+        <h3>Revenue over time</h3>
+        <div class="chart-box tall"><canvas id="revenueChart"></canvas></div>
+      </div>
+
+      <div class="report-grid">
+        <div class="card">
+          <h3>Top products by revenue</h3>
+          <div class="chart-box"><canvas id="topChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Sales by category</h3>
+          <div class="chart-box"><canvas id="categoryChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Payment methods</h3>
+          <div class="chart-box"><canvas id="paymentChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Slow movers <span class="muted small-text">(in stock, not sold in this period)</span></h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Qty</th><th>Stock value</th><th>Last sold</th></tr></thead>
+              <tbody id="slowBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Current stock value by category</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Category</th><th>Products</th><th>Units</th><th>Value at cost</th><th>Value at selling price</th><th>Potential profit</th></tr></thead>
+            <tbody id="valuationBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Export to CSV <span class="muted small-text">(opens in Excel; uses the dates above)</span></h3>
+        <div class="export-buttons">
+          <button class="secondary" data-export="sales">Sales</button>
+          <button class="secondary" data-export="sale-items">Sold items</button>
+          <button class="secondary" data-export="movements">Stock movements</button>
+          <button class="secondary" data-export="purchase-orders">Purchase orders</button>
+          <button class="secondary" data-export="stock">Current stock list</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/vendor/chart.js/chart.umd.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/reports.js"></script>
+</body>
+</html>

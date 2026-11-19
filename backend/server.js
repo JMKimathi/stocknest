@@ -14,6 +14,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const salesRoutes = require('./routes/salesRoutes');
 const purchaseOrderRoutes = require('./routes/purchaseOrderRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -24,6 +25,8 @@ app.use(express.json({ limit: '1mb' })); // room for a profile photo
 // Serve the vanilla frontend directly from Express (optional convenience -
 // you can also serve /frontend with a separate static server / Live Server)
 app.use(express.static(path.join(__dirname, '../frontend')));
+// Chart library for the reports page, served from node_modules (works offline)
+app.use('/vendor/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -34,6 +37,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/purchase-orders', purchaseOrderRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'StockNest API is running' }));
 
