@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS sale_items (
   sku VARCHAR(60),
   quantity INT NOT NULL,
   unit_price DECIMAL(10,2) NOT NULL,
+  unit_cost DECIMAL(10,2) NULL,
   line_total DECIMAL(12,2) NOT NULL,
   FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,

@@ -413,3 +413,22 @@ a.button-like { text-decoration: none; color: inherit; }
 .po-meta .muted { font-size: 11px; text-transform: uppercase; }
 .receive-qty { width: 80px; }
 @media (max-width: 700px) { .po-meta { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- Reports ---------- */
+.range-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.range-bar .status-pills { margin-bottom: 0; }
+.range-bar .filters { display: flex; align-items: center; gap: 8px; }
+.stat-card .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.report-grid .card { margin-bottom: 0; }
+.report-grid + .card { margin-top: 16px; }
+.chart-box { position: relative; height: 260px; }
+.chart-box.tall { height: 300px; }
+.chart-box.is-empty canvas { display: none; }
+.chart-box.is-empty::after {
+  content: 'No sales in this period'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; color: var(--muted);
+}
+.total-row td { font-weight: 700; border-top: 2px solid #ddd; }
+.export-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 900px) { .report-grid { grid-template-columns: 1fr; } }
