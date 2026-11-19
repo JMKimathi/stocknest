@@ -40,7 +40,7 @@ function initShell(activePage) {
 
   const chip = document.getElementById('userChip');
   if (chip) {
-    chip.innerHTML = `${user.name} <span class="role-badge">(${user.role})</span>`;
+    chip.innerHTML = `${esc(user.name)} <span class="role-badge">(${esc(user.role)})</span>`;
   }
 
   const navLink = document.querySelector(`.sidebar nav a[data-page="${activePage}"]`);

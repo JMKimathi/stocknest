@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 const generateToken = require('../utils/generateToken');
+const limiter = require('../utils/loginLimiter');
 
 // POST /api/auth/login
 async function login(req, res) {
@@ -10,17 +11,23 @@ async function login(req, res) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
+    if (limiter.isBlocked(req)) {
+      return res.status(429).json({ message: 'Too many failed attempts. Try again in 15 minutes.' });
+    }
+
     const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     const user = rows[0];
 
-    if (!user || !user.is_active) {
+    const match = user ? await bcrypt.compare(password, user.password_hash) : false;
+    if (!user || !match) {
+      limiter.recordFailure(req);
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    if (!user.is_active) {
+      return res.status(403).json({ message: 'This account has been disabled. Contact an admin.' });
     }
 
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
+    limiter.clearFailures(req);
 
     const token = generateToken(user);
     res.json({

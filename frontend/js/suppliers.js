@@ -23,10 +23,10 @@ async function loadSuppliers() {
     }
     body.innerHTML = suppliersCache.map(s => `
       <tr>
-        <td>${s.name}</td>
-        <td>${s.contact_person || '—'}</td>
-        <td>${s.phone || '—'}</td>
-        <td>${s.email || '—'}</td>
+        <td>${esc(s.name)}</td>
+        <td>${esc(s.contact_person || '—')}</td>
+        <td>${esc(s.phone || '—')}</td>
+        <td>${esc(s.email || '—')}</td>
         <td class="actions">
           ${currentUser.role === 'admin' ? `
             <button class="secondary small" onclick="editItem(${s.id})">Edit</button>

@@ -1,3 +1,14 @@
+// Escapes text before it is put into the page with innerHTML,
+// so names like <img onerror=...> show as text instead of running.
+function esc(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Central place for talking to the StockNest API.
 // Change API_BASE if your backend runs somewhere other than localhost:5000.
 const API_BASE = 'http://localhost:5000/api';

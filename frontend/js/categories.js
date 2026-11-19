@@ -11,9 +11,12 @@ function showAlert(message, type = 'error') {
   setTimeout(() => { box.style.display = 'none'; }, 4000);
 }
 
+let categoriesCache = [];
+
 async function loadCategories() {
   try {
     const categories = await api.get('/categories');
+    categoriesCache = categories;
     const body = document.getElementById('tableBody');
     if (!categories.length) {
       body.innerHTML = '<tr><td colspan="3" class="empty-state">No categories yet.</td></tr>';
@@ -21,11 +24,11 @@ async function loadCategories() {
     }
     body.innerHTML = categories.map(c => `
       <tr>
-        <td>${c.name}</td>
-        <td>${c.description || '—'}</td>
+        <td>${esc(c.name)}</td>
+        <td>${esc(c.description || '—')}</td>
         <td class="actions">
           ${currentUser.role === 'admin' ? `
-            <button class="secondary small" onclick="editItem(${c.id}, '${escapeQ(c.name)}', '${escapeQ(c.description || '')}')">Edit</button>
+            <button class="secondary small" onclick="editItem(${c.id})">Edit</button>
             <button class="danger small" onclick="deleteItem(${c.id})">Delete</button>
           ` : '—'}
         </td>
@@ -36,8 +39,6 @@ async function loadCategories() {
   }
 }
 
-function escapeQ(str) { return String(str).replace(/'/g, "\\'"); }
-
 document.getElementById('addBtn')?.addEventListener('click', () => {
   document.getElementById('itemForm').reset();
   document.getElementById('itemId').value = '';
@@ -46,10 +47,12 @@ document.getElementById('addBtn')?.addEventListener('click', () => {
   openModal('itemModal');
 });
 
-function editItem(id, name, description) {
-  document.getElementById('itemId').value = id;
-  document.getElementById('itemName').value = name;
-  document.getElementById('itemDescription').value = description;
+function editItem(id) {
+  const c = categoriesCache.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('itemId').value = c.id;
+  document.getElementById('itemName').value = c.name;
+  document.getElementById('itemDescription').value = c.description || '';
   document.getElementById('modalTitle').textContent = 'Edit Category';
   document.getElementById('formError').style.display = 'none';
   openModal('itemModal');

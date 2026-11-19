@@ -1,6 +1,7 @@
 const currentUser = initShell('products');
 let categories = [];
 let suppliers = [];
+let productsCache = [];
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -24,8 +25,8 @@ async function loadReferenceData() {
     api.get('/suppliers')
   ]);
 
-  const catOptions = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  const supOptions = suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  const catOptions = categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const supOptions = suppliers.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
 
   document.getElementById('productCategory').innerHTML = '<option value="">None</option>' + catOptions;
   document.getElementById('productSupplier').innerHTML = '<option value="">None</option>' + supOptions;
@@ -34,6 +35,7 @@ async function loadReferenceData() {
 
 // ---------- Render products table ----------
 function renderProducts(products) {
+  productsCache = products;
   const body = document.getElementById('productsBody');
   if (!products.length) {
     body.innerHTML = '<tr><td colspan="8" class="empty-state">No products found.</td></tr>';
@@ -47,16 +49,16 @@ function renderProducts(products) {
       : '';
     return `
       <tr>
-        <td class="sku">${p.sku}</td>
-        <td>${p.name}</td>
-        <td>${p.category_name || '—'}</td>
-        <td>${p.supplier_name || '—'}</td>
+        <td class="sku">${esc(p.sku)}</td>
+        <td>${esc(p.name)}</td>
+        <td>${esc(p.category_name || '—')}</td>
+        <td>${esc(p.supplier_name || '—')}</td>
         <td class="${isLow ? 'qty-low' : ''}">${p.quantity}</td>
         <td>${formatMoney(p.unit_price)}</td>
         <td><span class="badge ${isLow ? 'low' : 'ok'}">${isLow ? 'Low stock' : 'In stock'}</span></td>
         <td class="actions">
-          <button class="secondary small" onclick="openStockModal(${p.id}, '${escapeQuotes(p.name)}')">Stock</button>
-          <button class="secondary small" onclick="openHistoryModal(${p.id}, '${escapeQuotes(p.name)}')">History</button>
+          <button class="secondary small" onclick="openStockModal(${p.id})">Stock</button>
+          <button class="secondary small" onclick="openHistoryModal(${p.id})">History</button>
           <button class="secondary small" onclick="editProduct(${p.id})">Edit</button>
           ${deleteBtn}
         </td>
@@ -65,8 +67,10 @@ function renderProducts(products) {
   }).join('');
 }
 
-function escapeQuotes(str) {
-  return String(str).replace(/'/g, "\\'");
+// Product names are looked up by id instead of being pasted into onclick=""
+function productName(id) {
+  const p = productsCache.find(x => x.id === id);
+  return p ? p.name : '';
 }
 
 // ---------- Fetch products with current filters ----------
@@ -172,7 +176,8 @@ async function deleteProduct(id) {
 }
 
 // ---------- Stock adjustment ----------
-function openStockModal(id, name) {
+function openStockModal(id) {
+  const name = productName(id);
   document.getElementById('stockProductId').value = id;
   document.getElementById('stockProductName').textContent = name;
   document.getElementById('stockForm').reset();
@@ -204,7 +209,8 @@ document.getElementById('stockForm').addEventListener('submit', async (e) => {
 });
 
 // ---------- History ----------
-async function openHistoryModal(id, name) {
+async function openHistoryModal(id) {
+  const name = productName(id);
   document.getElementById('historyProductName').textContent = name;
   const body = document.getElementById('historyBody');
   body.innerHTML = '<tr><td colspan="5" class="empty-state">Loading...</td></tr>';
@@ -218,15 +224,15 @@ async function openHistoryModal(id, name) {
     }
     body.innerHTML = history.map(tx => `
       <tr>
-        <td><span class="badge ${tx.type}">${tx.type}</span></td>
+        <td><span class="badge ${esc(tx.type)}">${esc(tx.type)}</span></td>
         <td>${tx.quantity}</td>
-        <td>${tx.reason || '—'}</td>
-        <td>${tx.user_name}</td>
+        <td>${esc(tx.reason || '—')}</td>
+        <td>${esc(tx.user_name)}</td>
         <td>${new Date(tx.created_at).toLocaleString()}</td>
       </tr>
     `).join('');
   } catch (err) {
-    body.innerHTML = `<tr><td colspan="5" class="empty-state">${err.message}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="5" class="empty-state">${esc(err.message)}</td></tr>`;
   }
 }
 

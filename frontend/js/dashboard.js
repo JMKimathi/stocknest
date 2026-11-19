@@ -25,11 +25,11 @@ async function loadDashboard() {
     } else {
       body.innerHTML = summary.recentActivity.map(tx => `
         <tr>
-          <td>${tx.product_name}</td>
+          <td>${esc(tx.product_name)}</td>
           <td>${typeBadge(tx.type)}</td>
           <td>${tx.quantity}</td>
-          <td>${tx.reason || '—'}</td>
-          <td>${tx.user_name}</td>
+          <td>${esc(tx.reason || '—')}</td>
+          <td>${esc(tx.user_name)}</td>
           <td>${new Date(tx.created_at).toLocaleString()}</td>
         </tr>
       `).join('');
@@ -41,7 +41,7 @@ async function loadDashboard() {
     } else {
       lowBody.innerHTML = lowStock.map(p => `
         <tr>
-          <td>${p.name}</td>
+          <td>${esc(p.name)}</td>
           <td class="qty-low">${p.quantity}</td>
           <td>${p.reorder_level}</td>
         </tr>
@@ -49,9 +49,9 @@ async function loadDashboard() {
     }
   } catch (err) {
     document.getElementById('activityBody').innerHTML =
-      `<tr><td colspan="6" class="empty-state">${err.message}</td></tr>`;
+      `<tr><td colspan="6" class="empty-state">${esc(err.message)}</td></tr>`;
     document.getElementById('lowStockBody').innerHTML =
-      `<tr><td colspan="3" class="empty-state">${err.message}</td></tr>`;
+      `<tr><td colspan="3" class="empty-state">${esc(err.message)}</td></tr>`;
   }
 }
 

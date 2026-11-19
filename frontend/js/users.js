@@ -20,9 +20,9 @@ async function loadUsers() {
     const body = document.getElementById('tableBody');
     body.innerHTML = usersCache.map(u => `
       <tr>
-        <td>${u.name}</td>
-        <td>${u.email}</td>
-        <td><span class="badge ${u.role === 'admin' ? 'ok' : 'neutral'}">${u.role}</span></td>
+        <td>${esc(u.name)}</td>
+        <td>${esc(u.email)}</td>
+        <td><span class="badge ${u.role === 'admin' ? 'ok' : 'neutral'}">${esc(u.role)}</span></td>
         <td><span class="badge ${u.is_active ? 'ok' : 'low'}">${u.is_active ? 'Active' : 'Disabled'}</span></td>
         <td class="actions">
           <button class="secondary small" onclick="editItem(${u.id})">Edit</button>

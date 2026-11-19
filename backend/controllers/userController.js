@@ -48,6 +48,29 @@ async function updateUser(req, res) {
     const [existing] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
     if (!existing[0]) return res.status(404).json({ message: 'User not found' });
 
+    if (role !== undefined && !['admin', 'staff'].includes(role)) {
+      return res.status(400).json({ message: "Role must be 'admin' or 'staff'" });
+    }
+
+    const isSelf = Number(id) === Number(req.user.id);
+    const demoting = role !== undefined && role !== existing[0].role && existing[0].role === 'admin';
+    const disabling = is_active !== undefined && !Number(is_active) && existing[0].is_active;
+
+    // An admin must not be able to lock themselves out
+    if (isSelf && (demoting || disabling)) {
+      return res.status(400).json({ message: 'You cannot remove your own admin role or disable your own account' });
+    }
+
+    // Always keep at least one active admin in the system
+    if (existing[0].role === 'admin' && (demoting || disabling)) {
+      const [[{ admins }]] = await pool.query(
+        "SELECT COUNT(*) AS admins FROM users WHERE role = 'admin' AND is_active = 1"
+      );
+      if (admins <= 1) {
+        return res.status(400).json({ message: 'There must be at least one active admin' });
+      }
+    }
+
     await pool.query(
       'UPDATE users SET name = ?, role = ?, is_active = ? WHERE id = ?',
       [
