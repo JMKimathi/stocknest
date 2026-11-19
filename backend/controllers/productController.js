@@ -1,0 +1,236 @@
+const pool = require('../config/db');
+
+// GET /api/products?search=&category_id=&lowStock=true
+async function getProducts(req, res) {
+  try {
+    const { search, category_id, supplier_id, lowStock } = req.query;
+
+    let sql = `
+      SELECT p.*, c.name AS category_name, s.name AS supplier_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN suppliers s ON p.supplier_id = s.id
+      WHERE 1 = 1
+    `;
+    const params = [];
+
+    if (search) {
+      sql += ' AND (p.name LIKE ? OR p.sku LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+    if (category_id) {
+      sql += ' AND p.category_id = ?';
+      params.push(category_id);
+    }
+    if (supplier_id) {
+      sql += ' AND p.supplier_id = ?';
+      params.push(supplier_id);
+    }
+    if (lowStock === 'true') {
+      sql += ' AND p.quantity <= p.reorder_level';
+    }
+
+    sql += ' ORDER BY p.created_at DESC';
+
+    const [rows] = await pool.query(sql, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+async function getProductById(req, res) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT p.*, c.name AS category_name, s.name AS supplier_name
+       FROM products p
+       LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN suppliers s ON p.supplier_id = s.id
+       WHERE p.id = ?`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ message: 'Product not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+async function createProduct(req, res) {
+  try {
+    const { name, sku, description, category_id, supplier_id, quantity, reorder_level, unit_price } = req.body;
+    if (!name || !sku) {
+      return res.status(400).json({ message: 'Name and SKU are required' });
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO products (name, sku, description, category_id, supplier_id, quantity, reorder_level, unit_price)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name, sku, description || null,
+        category_id || null, supplier_id || null,
+        quantity || 0, reorder_level || 5, unit_price || 0
+      ]
+    );
+
+    // Log the initial stock as an "in" transaction for audit purposes
+    if (quantity && quantity > 0) {
+      await pool.query(
+        `INSERT INTO stock_transactions (product_id, user_id, type, quantity, reason)
+         VALUES (?, ?, 'in', ?, 'Initial stock on product creation')`,
+        [result.insertId, req.user.id, quantity]
+      );
+    }
+
+    res.status(201).json({ id: result.insertId, name, sku });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'A product with this SKU already exists' });
+    }
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+async function updateProduct(req, res) {
+  try {
+    const { id } = req.params;
+    const { name, sku, description, category_id, supplier_id, reorder_level, unit_price } = req.body;
+
+    const [existing] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
+    if (!existing[0]) return res.status(404).json({ message: 'Product not found' });
+
+    // Note: quantity is intentionally NOT edited here directly.
+    // Use POST /api/products/:id/stock to adjust quantity, so every
+    // change is logged in stock_transactions.
+    await pool.query(
+      `UPDATE products
+       SET name = ?, sku = ?, description = ?, category_id = ?, supplier_id = ?, reorder_level = ?, unit_price = ?
+       WHERE id = ?`,
+      [
+        name ?? existing[0].name,
+        sku ?? existing[0].sku,
+        description ?? existing[0].description,
+        category_id ?? existing[0].category_id,
+        supplier_id ?? existing[0].supplier_id,
+        reorder_level ?? existing[0].reorder_level,
+        unit_price ?? existing[0].unit_price,
+        id
+      ]
+    );
+
+    res.json({ message: 'Product updated successfully' });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'A product with this SKU already exists' });
+    }
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+async function deleteProduct(req, res) {
+  try {
+    const { id } = req.params;
+    const [result] = await pool.query('DELETE FROM products WHERE id = ?', [id]);
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Product not found' });
+    res.json({ message: 'Product deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+// POST /api/products/:id/stock  { type: 'in' | 'out' | 'adjustment', quantity, reason }
+async function adjustStock(req, res) {
+  const connection = await pool.getConnection();
+  try {
+    const { id } = req.params;
+    const { type, quantity, reason } = req.body;
+
+    if (!['in', 'out', 'adjustment'].includes(type)) {
+      return res.status(400).json({ message: "Type must be 'in', 'out', or 'adjustment'" });
+    }
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({ message: 'Quantity must be a positive number' });
+    }
+
+    await connection.beginTransaction();
+
+    const [rows] = await connection.query('SELECT * FROM products WHERE id = ? FOR UPDATE', [id]);
+    const product = rows[0];
+    if (!product) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    let newQuantity = product.quantity;
+    if (type === 'in') newQuantity += quantity;
+    else if (type === 'out') newQuantity -= quantity;
+    else if (type === 'adjustment') newQuantity = quantity; // set to exact value
+
+    if (newQuantity < 0) {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Insufficient stock for this operation' });
+    }
+
+    await connection.query('UPDATE products SET quantity = ? WHERE id = ?', [newQuantity, id]);
+    await connection.query(
+      `INSERT INTO stock_transactions (product_id, user_id, type, quantity, reason)
+       VALUES (?, ?, ?, ?, ?)`,
+      [id, req.user.id, type, quantity, reason || null]
+    );
+
+    await connection.commit();
+    res.json({ message: 'Stock updated successfully', quantity: newQuantity });
+  } catch (err) {
+    await connection.rollback();
+    res.status(500).json({ message: 'Server error', error: err.message });
+  } finally {
+    connection.release();
+  }
+}
+
+// GET /api/products/:id/history
+async function getProductHistory(req, res) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT t.*, u.name AS user_name
+       FROM stock_transactions t
+       JOIN users u ON t.user_id = u.id
+       WHERE t.product_id = ?
+       ORDER BY t.created_at DESC`,
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+// GET /api/products/summary/dashboard
+async function getDashboardSummary(req, res) {
+  try {
+    const [[{ totalItems }]] = await pool.query('SELECT COUNT(*) AS totalItems FROM products');
+    const [[{ totalValue }]] = await pool.query(
+      'SELECT COALESCE(SUM(quantity * unit_price), 0) AS totalValue FROM products'
+    );
+    const [[{ lowStockCount }]] = await pool.query(
+      'SELECT COUNT(*) AS lowStockCount FROM products WHERE quantity <= reorder_level'
+    );
+    const [recentActivity] = await pool.query(
+      `SELECT t.*, p.name AS product_name, u.name AS user_name
+       FROM stock_transactions t
+       JOIN products p ON t.product_id = p.id
+       JOIN users u ON t.user_id = u.id
+       ORDER BY t.created_at DESC
+       LIMIT 10`
+    );
+
+    res.json({ totalItems, totalValue, lowStockCount, recentActivity });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+module.exports = {
+  getProducts, getProductById, createProduct, updateProduct, deleteProduct,
+  adjustStock, getProductHistory, getDashboardSummary
+};

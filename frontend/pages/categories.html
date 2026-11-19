@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockNest — Categories</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">StockNest</div>
+      <nav>
+        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
+        <a href="products.html" data-page="products">Products</a>
+        <a href="categories.html" data-page="categories">Categories</a>
+        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
+        <a href="users.html" data-page="users" class="admin-only">Users</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Categories</h1>
+        <div class="topbar-actions">
+          <div class="user-chip" id="userChip"></div>
+          <button class="secondary small" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div id="pageAlert" class="alert" style="display:none;"></div>
+
+      <div class="card">
+        <div class="table-toolbar">
+          <div></div>
+          <button id="addBtn" class="admin-only">Add category</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="3" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal">
+      <h3 id="modalTitle">Add Category</h3>
+      <div id="formError" class="alert error" style="display:none;"></div>
+      <form id="itemForm">
+        <input type="hidden" id="itemId">
+        <label>Name</label>
+        <input type="text" id="itemName" required>
+        <label>Description</label>
+        <textarea id="itemDescription" rows="2"></textarea>
+        <div class="modal-actions">
+          <button type="button" class="secondary" onclick="closeModal('itemModal')">Cancel</button>
+          <button type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/categories.js"></script>
+</body>
+</html>

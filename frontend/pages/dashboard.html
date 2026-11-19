@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockNest — Dashboard</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">StockNest</div>
+      <nav>
+        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
+        <a href="products.html" data-page="products">Products</a>
+        <a href="categories.html" data-page="categories">Categories</a>
+        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
+        <a href="users.html" data-page="users" class="admin-only">Users</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <div class="topbar-actions">
+          <div class="user-chip" id="userChip"></div>
+          <button class="secondary small" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card accent">
+          <div class="label">Products</div>
+          <div class="value" id="statTotalItems">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Stock value</div>
+          <div class="value" id="statTotalValue">—</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="label">Low stock</div>
+          <div class="value" id="statLowStock">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Needs reorder</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Product</th><th>Qty</th><th>Reorder at</th></tr>
+            </thead>
+            <tbody id="lowStockBody">
+              <tr><td colspan="3" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Recent stock activity</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Product</th><th>Type</th><th>Qty</th><th>Reason</th><th>By</th><th>When</th></tr>
+            </thead>
+            <tbody id="activityBody">
+              <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>
