@@ -361,3 +361,40 @@ tbody tr:hover td { background: #f7f9fb; }
 .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 13px; }
 .pager button:disabled { opacity: .5; cursor: not-allowed; }
 .nowrap { white-space: nowrap; }
+
+/* ---------- Sales / checkout ---------- */
+.tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid #ddd; }
+.tab { background: none; color: var(--muted); border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 8px 14px; }
+.tab.active { color: #2c3e50; border-bottom-color: #2c3e50; font-weight: 600; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.pos-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; align-items: start; }
+.product-search { position: relative; margin-bottom: 12px; }
+.product-search input { width: 100%; box-sizing: border-box; }
+.search-results {
+  display: none; position: absolute; z-index: 20; left: 0; right: 0; top: 100%;
+  background: #fff; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  max-height: 320px; overflow-y: auto;
+}
+.search-results .result {
+  display: flex; justify-content: space-between; gap: 10px; width: 100%; text-align: left;
+  background: #fff; color: inherit; border: none; border-bottom: 1px solid #f0f0f0; border-radius: 0; padding: 9px 12px; font-size: 13px;
+}
+.search-results .result:hover:not(:disabled) { background: #f5f8fa; }
+.search-results .result:disabled { opacity: .5; cursor: not-allowed; }
+.search-results .result.empty { color: var(--muted); cursor: default; }
+.qty-input { width: 70px; }
+
+.checkout-card .totals > div { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+.checkout-card .totals input { width: 110px; text-align: right; }
+.checkout-card .totals .grand { border-top: 1px solid #eee; font-size: 18px; margin-top: 4px; padding-top: 10px; }
+.change-line { margin: 6px 0 4px; font-size: 14px; }
+.customer-details { margin: 10px 0; font-size: 13px; }
+.customer-details summary { cursor: pointer; color: var(--muted); }
+.block-btn { display: block; width: 100%; margin-top: 8px; padding: 10px; }
+a.button-like { text-decoration: none; color: inherit; }
+
+@media (max-width: 900px) {
+  .pos-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockNest — Sales</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">StockNest</div>
+      <nav>
+        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
+        <a href="products.html" data-page="products">Products</a>
+        <a href="sales.html" data-page="sales">Sales</a>
+        <a href="categories.html" data-page="categories">Categories</a>
+        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
+        <a href="users.html" data-page="users" class="admin-only">Users</a>
+        <a href="activity.html" data-page="activity" class="admin-only">Activity log</a>
+        <a href="profile.html" data-page="profile">My profile</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Sales</h1>
+        <div class="topbar-actions">
+          <div class="user-chip" id="userChip"></div>
+          <button class="secondary small" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div id="pageAlert" class="alert" style="display:none;"></div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="checkoutTab">New sale</button>
+        <button class="tab" data-tab="historyTab">Sales history</button>
+      </div>
+
+      <!-- ===== Checkout ===== -->
+      <section id="checkoutTab" class="tab-panel active">
+        <div class="pos-grid">
+          <div class="card">
+            <h3>Add products</h3>
+            <div class="product-search">
+              <input type="text" id="productSearch" placeholder="Type a name, or scan / type a SKU and press Enter" autocomplete="off">
+              <div id="searchResults" class="search-results"></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Product</th><th>Price</th><th style="width:110px">Qty</th><th>Total</th><th></th></tr></thead>
+                <tbody id="cartBody"><tr><td colspan="5" class="empty-state">The cart is empty.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card checkout-card">
+            <h3>Payment</h3>
+            <div class="totals">
+              <div><span>Subtotal</span><strong id="subtotalText">KSh 0.00</strong></div>
+              <div><span>Discount</span><input type="number" id="discountInput" min="0" step="0.01" value="0"></div>
+              <div class="grand"><span>Total</span><strong id="totalText">KSh 0.00</strong></div>
+            </div>
+
+            <label>Payment method</label>
+            <select id="paymentMethod">
+              <option value="cash">Cash</option>
+              <option value="mpesa">M-Pesa</option>
+              <option value="card">Card</option>
+              <option value="bank">Bank transfer</option>
+            </select>
+
+            <div id="cashFields">
+              <label>Amount received</label>
+              <input type="number" id="amountPaid" min="0" step="0.01">
+              <div class="change-line">Change: <strong id="changeText">KSh 0.00</strong></div>
+            </div>
+            <div id="refField" style="display:none;">
+              <label id="refLabel">Transaction code</label>
+              <input type="text" id="paymentRef" placeholder="e.g. QK7H2XYZ12">
+            </div>
+
+            <details class="customer-details">
+              <summary>Customer details (optional)</summary>
+              <label>Name</label>
+              <input type="text" id="customerName">
+              <label>Phone</label>
+              <input type="tel" id="customerPhone">
+            </details>
+
+            <div id="checkoutError" class="alert error" style="display:none;"></div>
+            <button id="completeSaleBtn" class="block-btn">Complete sale</button>
+            <button id="clearCartBtn" class="secondary block-btn">Clear cart</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== History ===== -->
+      <section id="historyTab" class="tab-panel">
+        <div class="stats-grid">
+          <div class="stat-card accent"><div class="label">Revenue</div><div class="value" id="sumRevenue">—</div></div>
+          <div class="stat-card"><div class="label">Sales</div><div class="value" id="sumCount">—</div></div>
+          <div class="stat-card"><div class="label">Discounts given</div><div class="value" id="sumDiscounts">—</div></div>
+          <div class="stat-card warning"><div class="label">Voided</div><div class="value" id="sumVoided">—</div></div>
+        </div>
+
+        <div class="card">
+          <div class="table-toolbar">
+            <div class="filters">
+              <input type="text" id="historySearch" placeholder="Receipt no, customer or cashier...">
+              <input type="date" id="historyFrom" title="From">
+              <input type="date" id="historyTo" title="To">
+              <select id="historyMethod">
+                <option value="">All payments</option>
+                <option value="cash">Cash</option>
+                <option value="mpesa">M-Pesa</option>
+                <option value="card">Card</option>
+                <option value="bank">Bank</option>
+              </select>
+              <select id="historyStatus">
+                <option value="">All statuses</option>
+                <option value="completed">Completed</option>
+                <option value="voided">Voided</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Receipt</th><th>When</th><th>Cashier</th><th>Customer</th><th>Items</th><th>Payment</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="historyBody"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+          <div class="pager">
+            <span id="historyInfo" class="muted"></span>
+            <div>
+              <button class="secondary small" id="historyPrev">Previous</button>
+              <button class="secondary small" id="historyNext">Next</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="voidModal">
+    <div class="modal">
+      <h3>Void sale <span id="voidReceiptNo"></span></h3>
+      <p class="muted">The sale stays on record as voided and all its items go back into stock.</p>
+      <div id="voidError" class="alert error" style="display:none;"></div>
+      <form id="voidForm">
+        <input type="hidden" id="voidSaleId">
+        <label>Reason</label>
+        <input type="text" id="voidReason" placeholder="e.g. Customer returned goods" required>
+        <div class="modal-actions">
+          <button type="button" class="secondary" onclick="closeModal('voidModal')">Cancel</button>
+          <button type="submit" class="danger">Void sale</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/sales.js"></script>
+</body>
+</html>
