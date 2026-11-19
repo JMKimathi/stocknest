@@ -51,6 +51,15 @@ function rangeParams() {
 }
 
 // ---------- Charts ----------
+function applyChartTheme() {
+  if (typeof Chart === 'undefined') return;
+  const css = getComputedStyle(document.documentElement);
+  Chart.defaults.color = css.getPropertyValue('--muted').trim();
+  Chart.defaults.borderColor = css.getPropertyValue('--border').trim();
+  Chart.defaults.font.family = css.getPropertyValue('--font').trim();
+}
+document.addEventListener('themechange', () => { applyChartTheme(); loadReport(); });
+
 function drawChart(id, config) {
   if (typeof Chart === 'undefined') return; // chart library missing - tables still work
   if (charts[id]) charts[id].destroy();
@@ -197,5 +206,6 @@ document.querySelectorAll('[data-export]').forEach(btn => {
 if (typeof Chart === 'undefined') {
   showAlert('Charts could not load. Run "npm install" in the backend folder, then restart the server.');
 }
+applyChartTheme();
 applyPreset('30');
 loadReport();

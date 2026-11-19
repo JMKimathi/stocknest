@@ -3,26 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>StockNest — Users</title>
+<title>Users — StockNest</title>
+<script src="../js/theme.js"></script>
 <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">StockNest</div>
-      <nav>
-        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
-        <a href="products.html" data-page="products">Products</a>
-        <a href="sales.html" data-page="sales">Sales</a>
-        <a href="purchase-orders.html" data-page="purchase-orders">Purchase orders</a>
-        <a href="reports.html" data-page="reports" class="admin-only">Reports</a>
-        <a href="categories.html" data-page="categories">Categories</a>
-        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
-        <a href="users.html" data-page="users" class="admin-only">Users</a>
-        <a href="activity.html" data-page="activity" class="admin-only">Activity log</a>
-        <a href="profile.html" data-page="profile">My profile</a>
-      </nav>
-    </aside>
+    <aside class="sidebar"></aside>
 
     <main class="main-content">
       <div class="page-header">
@@ -37,13 +24,17 @@
 
       <div class="card">
         <div class="table-toolbar">
-          <div></div>
+          <div class="status-pills" id="userPills" style="margin:0">
+            <button class="pill active" data-filter="">Everyone</button>
+            <button class="pill" data-filter="pending">Waiting for approval <span id="pendingCount"></span></button>
+            <button class="pill" data-filter="disabled">Disabled</button>
+          </div>
           <button id="addBtn">Add user</button>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="tableBody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last sign-in</th><th>Actions</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -62,7 +53,8 @@
         <input type="email" id="itemEmail" required>
         <div id="passwordField">
           <label>Password</label>
-          <input type="password" id="itemPassword" placeholder="Minimum 6 characters">
+          <input type="password" id="itemPassword" placeholder="At least 8 characters, letters and numbers">
+          <div class="muted small-text">They will be asked to choose their own password the first time they sign in.</div>
         </div>
         <label>Role</label>
         <select id="itemRole">
@@ -79,6 +71,19 @@
           <button type="submit">Save</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="resetModal">
+    <div class="modal">
+      <h3>Temporary password</h3>
+      <p>Give this password to <strong id="resetName"></strong> (<span id="resetEmail"></span>). They will choose their own when they sign in.</p>
+      <div class="temp-password" id="resetPassword"></div>
+      <p class="muted small-text">It is shown only once. Copy it now.</p>
+      <div class="modal-actions">
+        <button type="button" class="secondary" id="copyResetBtn">Copy</button>
+        <button type="button" onclick="closeModal('resetModal')">Done</button>
+      </div>
     </div>
   </div>
 

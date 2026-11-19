@@ -3,30 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>StockNest — Dashboard</title>
+<title>Dashboard — StockNest</title>
+<script src="../js/theme.js"></script>
 <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">StockNest</div>
-      <nav>
-        <a href="dashboard.html" data-page="dashboard">Dashboard</a>
-        <a href="products.html" data-page="products">Products</a>
-        <a href="sales.html" data-page="sales">Sales</a>
-        <a href="purchase-orders.html" data-page="purchase-orders">Purchase orders</a>
-        <a href="reports.html" data-page="reports" class="admin-only">Reports</a>
-        <a href="categories.html" data-page="categories">Categories</a>
-        <a href="suppliers.html" data-page="suppliers">Suppliers</a>
-        <a href="users.html" data-page="users" class="admin-only">Users</a>
-        <a href="activity.html" data-page="activity" class="admin-only">Activity log</a>
-        <a href="profile.html" data-page="profile">My profile</a>
-      </nav>
-    </aside>
+    <aside class="sidebar"></aside>
 
     <main class="main-content">
       <div class="page-header">
-        <h1>Dashboard</h1>
+        <div>
+          <h1 id="greeting">Dashboard</h1>
+          <div class="welcome" id="todayLine"></div>
+        </div>
         <div class="topbar-actions">
           <div class="user-chip" id="userChip"></div>
           <button class="secondary small" id="logoutBtn">Log out</button>
@@ -35,55 +25,64 @@
 
       <div class="stats-grid">
         <div class="stat-card accent">
-          <div class="label">Products</div>
-          <div class="value" id="statTotalItems">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Stock value</div>
-          <div class="value" id="statTotalValue">—</div>
-        </div>
-        <div class="stat-card warning">
-          <div class="label">Low stock</div>
-          <div class="value" id="statLowStock">—</div>
-          <div class="sub" id="statOutOfStock"></div>
-        </div>
-        <div class="stat-card accent">
-          <div class="label">Sales today</div>
+          <div class="label"><span class="stat-icon" data-icon="cash"></span>Sales today</div>
           <div class="value" id="statRevenueToday">—</div>
           <div class="sub" id="statSalesToday"></div>
         </div>
+        <div class="stat-card warning">
+          <div class="label"><span class="stat-icon" data-icon="alert"></span>Low stock</div>
+          <div class="value" id="statLowStock">—</div>
+          <div class="sub" id="statOutOfStock"></div>
+        </div>
         <div class="stat-card">
-          <div class="label">Open purchase orders</div>
+          <div class="label"><span class="stat-icon" data-icon="products"></span>Products</div>
+          <div class="value" id="statTotalItems">—</div>
+          <div class="sub" id="statTotalValue"></div>
+        </div>
+        <div class="stat-card">
+          <div class="label"><span class="stat-icon" data-icon="orders"></span>Open purchase orders</div>
           <div class="value" id="statOpenOrders">—</div>
           <div class="sub" id="statOverdue"></div>
         </div>
       </div>
 
       <div class="card">
-        <h3>Needs reorder</h3>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Product</th><th>Qty</th><th>Reorder at</th></tr>
-            </thead>
-            <tbody id="lowStockBody">
-              <tr><td colspan="3" class="empty-state">Loading...</td></tr>
-            </tbody>
-          </table>
+        <div class="card-head">
+          <h3>Quick actions</h3>
+        </div>
+        <div class="quick-actions">
+          <a class="button-like" href="sales.html">New sale</a>
+          <a class="button-like secondary" href="products.html">Add or find a product</a>
+          <a class="button-like secondary" href="purchase-orders.html">Order from a supplier</a>
+          <a class="button-like secondary admin-only" href="reports.html">View reports</a>
         </div>
       </div>
 
-      <div class="card">
-        <h3>Recent stock activity</h3>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Product</th><th>Type</th><th>Qty</th><th>Reason</th><th>By</th><th>When</th></tr>
-            </thead>
-            <tbody id="activityBody">
-              <tr><td colspan="6" class="empty-state">Loading...</td></tr>
-            </tbody>
-          </table>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-head">
+            <h3>Recent stock activity</h3>
+            <a href="products.html" class="small-text">All products →</a>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Type</th><th>Qty</th><th>Reason</th><th>By</th><th>When</th></tr></thead>
+              <tbody id="activityBody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Needs reorder</h3>
+            <a href="products.html?lowStock=true" class="small-text">See all →</a>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Left</th><th>Reorder at</th></tr></thead>
+              <tbody id="lowStockBody"><tr><td colspan="3" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
